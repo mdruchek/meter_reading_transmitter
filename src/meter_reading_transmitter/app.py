@@ -13,35 +13,31 @@ class MeterReadingTransmitter(toga.App):
     toga.Widget.DEBUG_LAYOUT_ENABLED = True
 
     def startup(self):
-        self.profile_creation_window_is_open = False
+        self.main_box = Box()
+        self.view_box = Box(style=Pack(direction=COLUMN, flex=1))
+        self.main_box.add(self.view_box)
+        self.show_profiles_view(widget=None)
+        self.main_window = MainWindow(title=self.formal_name)
+        self.main_window.content = self.main_box
+        self.main_window.show()
 
-        main_box = Box(style=Pack(direction=COLUMN, margin=10))
+    def show_profiles_view(self, widget):
+        self.view_box.clear()
 
-        profile_box = Box(style=Pack(direction=COLUMN), flex=1)
+        profiles_box = Box(style=Pack(direction=COLUMN), flex=1)
         create_profile_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
 
         create_profile_btn = Button(
             text='Создать профиль',
-            on_press=self.open_create_profile_window
+            on_press=self.show_create_profile_view
         )
 
         create_profile_btn_box.add(create_profile_btn)
-        main_box.add(profile_box, create_profile_btn_box)
+        self.view_box.add(profiles_box, create_profile_btn_box)
+        # self.main_box.add(self.view_box)
 
-        self.main_window = MainWindow(title=self.formal_name)
-        self.main_window.content = main_box
-        self.main_window.show()
-
-    def open_create_profile_window(self, widget):
-        if self.profile_creation_window_is_open:
-            return
-
-        self.create_profile_window = toga.Window(
-            title='Создание профиля'
-        )
-        self.create_profile_window.on_close = self.close_create_profile_window
-
-        main_box = Box(style=Pack(direction=COLUMN))
+    def show_create_profile_view(self, widget):
+        self.view_box.clear()
 
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
         name_profile_label = Label(style=Pack(flex=0), text='Имя профиля')
@@ -53,64 +49,59 @@ class MeterReadingTransmitter(toga.App):
         choose_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
 
         choose_campaign_btn = Button(
+            style=Pack(flex=1),
             text='Выбрать кампанию',
-            on_press=self.open_choice_campaign_window
+            on_press=self.show_choice_campaign_view
         )
 
         choose_campaign_btn_box.add(choose_campaign_btn)
 
         create_profile_box = Box(style=Pack(direction=ROW, flex=0))
-        close_window_btn = Button(text='Закрыть', on_press=self.close_create_profile_window)
-        create_profile_btn = Button(text='Создать')
-        create_profile_box.add(close_window_btn, create_profile_btn)
+        return_btn = Button(text='Назад', style=Pack(flex=1), on_press=self.show_profiles_view)
+        create_profile_btn = Button(text='Создать', style=Pack(flex=1))
+        create_profile_box.add(return_btn, create_profile_btn)
 
-        main_box.add(name_profile_box, campaign_box, choose_campaign_btn_box, create_profile_box)
+        self.view_box.add(name_profile_box, campaign_box, choose_campaign_btn_box, create_profile_box)
 
-        self.create_profile_window.content = main_box
-        self.create_profile_window.show()
-        self.profile_creation_window_is_open = True
+    def show_choice_campaign_view(self, widget):
+        self.view_box.clear()
 
-    def close_create_profile_window(self, widget):
-        self.create_profile_window.close()
-        self.profile_creation_window_is_open = False
-
-    def open_choice_campaign_window(self, widget):
-
-        self.choice_campaign_window = toga.Window(
-            title='Выбор кампании'
-        )
-
-        main_box = Box(style=Pack(direction=COLUMN))
-
-        campaigns_box = Box(style=Pack(direction=ROW, flex=0))
+        campaigns_box = Box(style=Pack(direction=ROW, flex=1))
 
         campaign_kvc_btn = Button(
+            style=Pack(flex=1),
             text=self.KVC.name,
-            on_press=self.KVC.open_create_profile_campaign_window
+            on_press=lambda widget: self.KVC.show_create_profile_campaign_view(self, widget)
         )
 
         campaigns_box.add(campaign_kvc_btn)
 
-        main_box.add(campaigns_box)
+        return_btn_box = Box(style=Pack(direction=ROW, flex=0))
 
-        self.choice_campaign_window.content = main_box
-        self.choice_campaign_window.show()
+        return_btn = Button(
+            style=Pack(flex=1),
+            text='Назад',
+            on_press=self.show_create_profile_view
+        )
+
+        return_btn_box.add(return_btn)
+
+        self.view_box.add(campaigns_box, return_btn_box)
 
 
     class KVC:
         name = 'КВЦ'
 
         @classmethod
-        def open_create_profile_campaign_window(cls, widget):
-            create_profile_campaign_window = toga.Window(title='КВЦ')
-            main_box = Box(style=Pack(direction=COLUMN))
+        def show_create_profile_campaign_view(cls, app_instance: "MeterReadingTransmitter", widget):
+            app_instance.view_box.clear()
 
             region_box = Box(style=Pack(direction=COLUMN, flex=0))
-            regions = cls.request_list_regions()
+            regions = cls.get_active_ctr_regions()
             region_selection = Selection(items=regions, accessor="name")
             region_box.add(region_selection)
 
-            personal_account_box = Box(style=Pack(direction=ROW, flex=0))
+            personal_account_box = Box(style=Pack(direction=ROW, flex=1))
             personal_account_label = Label(text='Лицевой счет:', style=Pack(flex=0))
             personal_account_txt_input = TextInput(style=Pack(flex=1))
             personal_account_box.add(personal_account_label, personal_account_txt_input)
@@ -119,17 +110,33 @@ class MeterReadingTransmitter(toga.App):
             add_campaign_btn = Button(text='Добавить кампанию')
             add_campaign_btn_box.add(add_campaign_btn)
 
-            main_box.add(region_box, personal_account_box, add_campaign_btn_box)
+            return_btn_box = Box(style=Pack(direction=ROW, flex=0))
 
-            create_profile_campaign_window.content = main_box
-            create_profile_campaign_window.show()
+            return_btn = Button(
+                style=Pack(flex=1),
+                text='Назад',
+                on_press=app_instance.show_choice_campaign_view
+            )
+
+            return_btn_box.add(return_btn)
+
+            app_instance.view_box.add(region_box, personal_account_box, add_campaign_btn_box, return_btn_box)
 
         @staticmethod
-        def request_list_regions():
-            response = requests.post('https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions')
+        def get_active_ctr_regions():
+            url = 'https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions'
+            response = requests.post(url)
             regions_json = response.json()
+            print(regions_json)
             return regions_json
 
+        @staticmethod
+        def get_locations_for_region(region_id):
+            url = 'https://send.kvc-nn.ru/api/ControlIndications/GetLocationsForRegion'
+            params = {'idRegion': region_id}
+            response = requests.post(url, params=params)
+            locations_for_region_json = response.json()
+            return locations_for_region_json
 
 def main():
     return MeterReadingTransmitter()
