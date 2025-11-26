@@ -1,8 +1,11 @@
 """
 An application for transmitting meter readings
 """
+import json
+
 import requests
 import toga
+from pygments.formatters.svg import class2style
 from toga import Box, Button, Label, TextInput, MainWindow, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
@@ -122,12 +125,15 @@ class MeterReadingTransmitter(toga.App):
 
             app_instance.view_box.add(region_box, personal_account_box, add_campaign_btn_box, return_btn_box)
 
+        @classmethod
+        def add_campaign(cls, region_id):
+            ...
+
         @staticmethod
         def get_active_ctr_regions():
             url = 'https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions'
             response = requests.post(url)
             regions_json = response.json()
-            print(regions_json)
             return regions_json
 
         @staticmethod
@@ -137,6 +143,42 @@ class MeterReadingTransmitter(toga.App):
             response = requests.post(url, params=params)
             locations_for_region_json = response.json()
             return locations_for_region_json
+
+        @staticmethod
+        def get_get_abonent_info(location_for_region):
+            url = 'https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo'
+            response = requests.post(url)
+
+
+    class Settings:
+        @classmethod
+        def load_settings(cls, file_name):
+            try:
+                with open(file_name, 'r', encoding='utf-8') as file:
+                    settings = json.load(file)
+            except FileNotFoundError:
+                settings = {}
+            return settings
+
+
+        @classmethod
+        def update_setting(cls, file_name, key, value):
+            settings = cls.load_settings(file_name)
+            settings[key] = value
+            cls.save_settings(file_name, settings)
+
+        @classmethod
+        def delete_setting(cls, file_name, key):
+            settings = cls.load_settings(file_name)
+            if key in settings:
+                del settings[key]
+                cls.save_settings(file_name, settings)
+
+        @classmethod
+        def save_settings(cls, file_name, settings):
+            with open(file_name, 'w', encoding='utf-8') as file:
+                json.dump(settings, file, indent=4, ensure_ascii=False)
+
 
 def main():
     return MeterReadingTransmitter()
