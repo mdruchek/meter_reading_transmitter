@@ -2,10 +2,10 @@
 An application for transmitting meter readings
 """
 import json
+import os
 
 import requests
 import toga
-from pygments.formatters.svg import class2style
 from toga import Box, Button, Label, TextInput, MainWindow, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
@@ -14,6 +14,8 @@ from toga.style.pack import COLUMN, ROW
 class MeterReadingTransmitter(toga.App):
 
     toga.Widget.DEBUG_LAYOUT_ENABLED = True
+
+    SETTINGS_FILE = "./settings.json"
 
     def startup(self):
         self.main_box = Box()
@@ -110,7 +112,11 @@ class MeterReadingTransmitter(toga.App):
             personal_account_box.add(personal_account_label, personal_account_txt_input)
 
             add_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
-            add_campaign_btn = Button(text='Добавить кампанию')
+            add_campaign_btn = Button(
+                style=Pack(flex=1),
+                text='Добавить кампанию',
+                on_press=lambda w: cls.add_campaign()
+            )
             add_campaign_btn_box.add(add_campaign_btn)
 
             return_btn_box = Box(style=Pack(direction=ROW, flex=0))
@@ -126,8 +132,15 @@ class MeterReadingTransmitter(toga.App):
             app_instance.view_box.add(region_box, personal_account_box, add_campaign_btn_box, return_btn_box)
 
         @classmethod
-        def add_campaign(cls, region_id):
-            ...
+        def add_campaign(cls, region_id, personal_account):
+            setting_add = {
+                    "campaign": "квц",
+                    "region_id": region_id,
+                    "personal_account": personal_account
+            }
+
+            cls.show_create_profile_campaign_view()
+
 
         @staticmethod
         def get_active_ctr_regions():
@@ -145,7 +158,7 @@ class MeterReadingTransmitter(toga.App):
             return locations_for_region_json
 
         @staticmethod
-        def get_get_abonent_info(location_for_region):
+        def get_abonent_info(location_for_region):
             url = 'https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo'
             response = requests.post(url)
 
@@ -157,7 +170,9 @@ class MeterReadingTransmitter(toga.App):
                 with open(file_name, 'r', encoding='utf-8') as file:
                     settings = json.load(file)
             except FileNotFoundError:
-                settings = {}
+                with open(file_name, 'w', encoding='utf-8') as file:
+                    settings = []
+                    json.dump(settings, file, indent=4, ensure_ascii=False)
             return settings
 
 
