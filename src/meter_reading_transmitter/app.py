@@ -15,7 +15,8 @@ class MeterReadingTransmitter(toga.App):
 
     toga.Widget.DEBUG_LAYOUT_ENABLED = True
 
-    SETTINGS_FILE = "./settings.json"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
     def startup(self):
         self.main_box = Box()
@@ -39,9 +40,16 @@ class MeterReadingTransmitter(toga.App):
 
         create_profile_btn_box.add(create_profile_btn)
         self.view_box.add(profiles_box, create_profile_btn_box)
-        # self.main_box.add(self.view_box)
 
     def show_create_profile_view(self, widget):
+        def get_settings_campaign_for_add(settings_for_add):
+            settings_upload = self.Settings.load_settings(self.SETTINGS_FILE)
+            if settings_upload:
+                settings_upload.append(settings_for_add)
+            else:
+                settings_upload = [settings_for_add,]
+            self.Settings.save_settings(self.SETTINGS_FILE, settings=settings_upload)
+
         self.view_box.clear()
 
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
@@ -56,7 +64,10 @@ class MeterReadingTransmitter(toga.App):
         choose_campaign_btn = Button(
             style=Pack(flex=1),
             text='Выбрать кампанию',
-            on_press=self.show_choice_campaign_view
+            on_press=lambda widget: self.show_choice_campaign_view(
+                widget=widget,
+                callback_settings_campaign=get_settings_campaign_for_add
+            )
         )
 
         choose_campaign_btn_box.add(choose_campaign_btn)
@@ -68,7 +79,7 @@ class MeterReadingTransmitter(toga.App):
 
         self.view_box.add(name_profile_box, campaign_box, choose_campaign_btn_box, create_profile_box)
 
-    def show_choice_campaign_view(self, widget):
+    def show_choice_campaign_view(self, widget, callback_settings_campaign):
         self.view_box.clear()
 
         campaigns_box = Box(style=Pack(direction=ROW, flex=1))
@@ -76,7 +87,11 @@ class MeterReadingTransmitter(toga.App):
         campaign_kvc_btn = Button(
             style=Pack(flex=1),
             text=self.KVC.name,
-            on_press=lambda widget: self.KVC.show_create_profile_campaign_view(self, widget)
+            on_press=lambda widget: self.KVC.show_create_profile_campaign_view(
+                app_instance=self,
+                widget=widget,
+                callback_settings_campaign=callback_settings_campaign
+            )
         )
 
         campaigns_box.add(campaign_kvc_btn)
@@ -98,7 +113,7 @@ class MeterReadingTransmitter(toga.App):
         name = 'КВЦ'
 
         @classmethod
-        def show_create_profile_campaign_view(cls, app_instance: "MeterReadingTransmitter", widget):
+        def show_create_profile_campaign_view(cls, app_instance: "MeterReadingTransmitter", widget, callback_settings_campaign):
             app_instance.view_box.clear()
 
             region_box = Box(style=Pack(direction=COLUMN, flex=0))
@@ -115,7 +130,13 @@ class MeterReadingTransmitter(toga.App):
             add_campaign_btn = Button(
                 style=Pack(flex=1),
                 text='Добавить кампанию',
-                on_press=lambda w: cls.add_campaign()
+                on_press=lambda widget: cls.add_campaign(
+                    app_instance=app_instance,
+                    widget=widget,
+                    callback_settings_campaign=callback_settings_campaign,
+                    region_id=999,
+                    personal_account=555
+                )
             )
             add_campaign_btn_box.add(add_campaign_btn)
 
@@ -132,14 +153,17 @@ class MeterReadingTransmitter(toga.App):
             app_instance.view_box.add(region_box, personal_account_box, add_campaign_btn_box, return_btn_box)
 
         @classmethod
-        def add_campaign(cls, region_id, personal_account):
+        def add_campaign(cls, app_instance, widget, region_id, personal_account, callback_settings_campaign):
             setting_add = {
                     "campaign": "квц",
                     "region_id": region_id,
                     "personal_account": personal_account
             }
+            callback_settings_campaign(setting_add)
 
-            cls.show_create_profile_campaign_view()
+            app_instance.show_create_profile_view(
+                widget=widget
+            )
 
 
         @staticmethod
@@ -171,9 +195,9 @@ class MeterReadingTransmitter(toga.App):
                     settings = json.load(file)
             except FileNotFoundError:
                 with open(file_name, 'w', encoding='utf-8') as file:
-                    settings = []
-                    json.dump(settings, file, indent=4, ensure_ascii=False)
-            return settings
+                    json.dump([], file, indent=4, ensure_ascii=False)
+            if 'settings' in locals():
+                return settings
 
 
         @classmethod
