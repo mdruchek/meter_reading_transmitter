@@ -13,7 +13,7 @@ from toga.style.pack import COLUMN, ROW
 
 class MeterReadingTransmitter(toga.App):
 
-    toga.Widget.DEBUG_LAYOUT_ENABLED = True
+    # toga.Widget.DEBUG_LAYOUT_ENABLED = True
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
@@ -42,14 +42,6 @@ class MeterReadingTransmitter(toga.App):
         self.view_box.add(profiles_box, create_profile_btn_box)
 
     def show_create_profile_view(self, widget):
-        def get_settings_campaign_for_add(settings_for_add):
-            settings_upload = self.Settings.load_settings(self.SETTINGS_FILE)
-            if settings_upload:
-                settings_upload.append(settings_for_add)
-            else:
-                settings_upload = [settings_for_add,]
-            self.Settings.save_settings(self.SETTINGS_FILE, settings=settings_upload)
-
         self.view_box.clear()
 
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
@@ -57,7 +49,27 @@ class MeterReadingTransmitter(toga.App):
         name_profile_txt_input = TextInput(style=Pack(flex=1))
         name_profile_box.add(name_profile_label, name_profile_txt_input)
 
-        campaign_box = Box(style=Pack(direction=COLUMN, flex=1))
+        campaigns_box = Box(style=Pack(direction=COLUMN, flex=1))
+
+        def get_settings_campaign_for_add(settings_for_add):
+            campaign_name = settings_for_add['campaign_name']
+            personal_account = settings_for_add['personal_account']
+            campaign_box = Box(style=Pack(direction=COLUMN, flex=0))
+            text_campaign_label = f'кампания {campaign_name}, лицевой счет {personal_account}'
+            campaign_label = Label(text=text_campaign_label)
+            campaign_box.add(campaign_label)
+            campaigns_box.add(campaign_box)
+            print(campaign_box.children)
+            print(campaigns_box)
+
+            # settings_upload = self.Settings.load_settings(self.SETTINGS_FILE)
+            # if settings_upload:
+            #     settings_upload.append(settings_for_add)
+            # else:
+            #     settings_upload = [settings_for_add,]
+            # self.Settings.save_settings(self.SETTINGS_FILE, settings=settings_upload)
+
+        print(campaigns_box.children)
 
         choose_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
 
@@ -77,7 +89,7 @@ class MeterReadingTransmitter(toga.App):
         create_profile_btn = Button(text='Создать', style=Pack(flex=1))
         create_profile_box.add(return_btn, create_profile_btn)
 
-        self.view_box.add(name_profile_box, campaign_box, choose_campaign_btn_box, create_profile_box)
+        self.view_box.add(name_profile_box, campaigns_box, choose_campaign_btn_box, create_profile_box)
 
     def show_choice_campaign_view(self, widget, callback_settings_campaign):
         self.view_box.clear()
@@ -155,7 +167,7 @@ class MeterReadingTransmitter(toga.App):
         @classmethod
         def add_campaign(cls, app_instance, widget, region_id, personal_account, callback_settings_campaign):
             setting_add = {
-                    "campaign": "квц",
+                    "campaign_name": "квц",
                     "region_id": region_id,
                     "personal_account": personal_account
             }
