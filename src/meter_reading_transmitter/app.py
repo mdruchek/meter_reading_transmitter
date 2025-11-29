@@ -166,16 +166,23 @@ class MeterReadingTransmitter(toga.App):
 
             app_instance.footer_box.clear()
             add_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
+
+            def on_add_campaign(widget):
+                region_row = region_selection.value
+
+                cls.add_campaign(
+                    app_instance=app_instance,
+                    widget=widget,
+                    region_id=region_row.id,
+                    personal_account=personal_account_txt_input
+                )
+
             add_campaign_btn = Button(
                 style=Pack(flex=1),
                 text='Добавить кампанию',
-                on_press=lambda widget: cls.add_campaign(
-                    app_instance=app_instance,
-                    widget=widget,
-                    region_id=999,
-                    personal_account=555
-                )
+                on_press=on_add_campaign
             )
+
             add_campaign_btn_box.add(add_campaign_btn)
 
             return_btn_box = Box(style=Pack(direction=ROW, flex=0))
@@ -187,7 +194,6 @@ class MeterReadingTransmitter(toga.App):
             )
 
             return_btn_box.add(return_btn)
-
             app_instance.footer_box.add(add_campaign_btn_box, return_btn_box)
 
         @classmethod
