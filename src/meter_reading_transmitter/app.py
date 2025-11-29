@@ -3,7 +3,6 @@ An application for transmitting meter readings
 """
 import json
 import os
-from zipfile import stringFileHeader
 
 import requests
 import toga
@@ -18,6 +17,8 @@ class MeterReadingTransmitter(toga.App):
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
+
+    SETTINGS_CAMPAIGNS_FOR_ADD = []
 
     def __init__(self, **kwargs):
         super().__init__(formal_name='передача показаний счетчиков', **kwargs)
@@ -44,21 +45,36 @@ class MeterReadingTransmitter(toga.App):
         self.header_box.add(header_label)
 
         self.body_box.clear()
+        settings = self.Settings.load_settings(self.SETTINGS_FILE)
+
         profiles_box = Box(style=Pack(direction=COLUMN, flex=1))
+
+        if settings:
+            for profile in settings:
+                profile_box = Box(style=Pack(flex=0, direction=COLUMN))
+                profile_btn = Button(text=profile['profile_name'])
+                profile_box.add(profile_btn)
+                profiles_box.add(profile_box)
+
         self.body_box.add(profiles_box)
 
         self.footer_box.clear()
         create_profile_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
 
         create_profile_btn = Button(
+            id='create_profile_btn',
             text='Создать профиль',
             on_press=self.show_create_profile_view
         )
 
         create_profile_btn_box.add(create_profile_btn)
-        self.footer_box.add(profiles_box, create_profile_btn_box)
+        self.footer_box.add(create_profile_btn_box)
 
     def show_create_profile_view(self, widget):
+        if widget.id == 'create_profile_btn':
+            self.SETTINGS_CAMPAIGNS_FOR_ADD.clear()
+            self.campaigns_box.clear()
+
         self.header_box.clear()
         header_label = Label(text='создание нового профиля')
         self.header_box.add(header_label)
@@ -69,24 +85,6 @@ class MeterReadingTransmitter(toga.App):
         name_profile_txt_input = TextInput(style=Pack(flex=1))
         name_profile_box.add(name_profile_label, name_profile_txt_input)
         self.body_box.add(name_profile_box, self.campaigns_box)
-
-        # def get_settings_campaign_for_add(settings_for_add):
-        #     campaign_name = settings_for_add['campaign_name']
-        #     personal_account = settings_for_add['personal_account']
-        #     campaign_box = Box(style=Pack(direction=COLUMN, flex=0))
-        #     text_campaign_label = f'кампания {campaign_name}, лицевой счет {personal_account}'
-        #     campaign_label = Label(text=text_campaign_label)
-        #     campaign_box.add(campaign_label)
-        #     campaigns_box.add(campaign_box)
-        #     print(campaign_box.children)
-        #     print(campaigns_box)
-
-            # settings_upload = self.Settings.load_settings(self.SETTINGS_FILE)
-            # if settings_upload:
-            #     settings_upload.append(settings_for_add)
-            # else:
-            #     settings_upload = [settings_for_add,]
-            # self.Settings.save_settings(self.SETTINGS_FILE, settings=settings_upload)
 
         self.footer_box.clear()
         choose_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
@@ -103,7 +101,34 @@ class MeterReadingTransmitter(toga.App):
 
         create_profile_box = Box(style=Pack(direction=ROW, flex=0))
         return_btn = Button(text='Назад', style=Pack(flex=1), on_press=self.show_profiles_view)
-        create_profile_btn = Button(text='Создать', style=Pack(flex=1))
+
+        def create_profile(widget):
+            name_profile = name_profile_txt_input.value
+            if self.SETTINGS_CAMPAIGNS_FOR_ADD:
+
+                settings_for_add = {
+                    'profile_name': name_profile,
+                    'campaigns': []
+                }
+
+                settings_for_add["campaigns"].append(self.SETTINGS_CAMPAIGNS_FOR_ADD)
+
+                settings_upload = self.Settings.load_settings(self.SETTINGS_FILE)
+                if settings_upload:
+                    settings_upload.append(settings_for_add)
+                else:
+                    settings_upload = [settings_for_add,]
+
+                self.Settings.save_settings(self.SETTINGS_FILE, settings=settings_upload)
+                self.SETTINGS_CAMPAIGNS_FOR_ADD = []
+                self.show_profiles_view(widget)
+
+        create_profile_btn = Button(
+            style=Pack(flex=1),
+            text='Создать',
+            on_press=create_profile
+        )
+
         create_profile_box.add(return_btn, create_profile_btn)
 
         self.footer_box.add( choose_campaign_btn_box, create_profile_box)
@@ -169,12 +194,16 @@ class MeterReadingTransmitter(toga.App):
 
             def on_add_campaign(widget):
                 region_row = region_selection.value
+                region_name = region_row.name
+                region_id = region_row.id
+                personal_account = personal_account_txt_input.value
 
                 cls.add_campaign(
                     app_instance=app_instance,
                     widget=widget,
-                    region_id=region_row.id,
-                    personal_account=personal_account_txt_input
+                    region_id=region_id,
+                    region_name=region_name,
+                    personal_account=personal_account
                 )
 
             add_campaign_btn = Button(
@@ -197,14 +226,20 @@ class MeterReadingTransmitter(toga.App):
             app_instance.footer_box.add(add_campaign_btn_box, return_btn_box)
 
         @classmethod
-        def add_campaign(cls, app_instance, widget, region_id, personal_account):
-            setting_add = {
-                    "campaign_name": "квц",
-                    "region_id": region_id,
-                    "personal_account": personal_account
-            }
+        def add_campaign(cls, app_instance, widget, region_id, region_name, personal_account):
+            campaign_name = 'квц'
+
+            app_instance.SETTINGS_CAMPAIGNS_FOR_ADD.append(
+                {
+                    'campaign_name': campaign_name,
+                    'region_id': region_id,
+                    'region_name': region_name,
+                    'personal_account': personal_account
+                }
+            )
+
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
-            campaign_label = Label(text=f'{setting_add['campaign_name']}')
+            campaign_label = Label(text=f'добовлена кампания "{campaign_name}"')
             campaign_box.add(campaign_label)
             app_instance.campaigns_box.add(campaign_box)
 
