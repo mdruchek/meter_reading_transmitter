@@ -3,6 +3,7 @@ An application for transmitting meter readings
 """
 import json
 import os
+import re
 
 import requests
 import toga
@@ -51,9 +52,38 @@ class MeterReadingTransmitter(toga.App):
 
         if settings:
             for profile in settings:
-                profile_box = Box(style=Pack(flex=0, direction=COLUMN))
-                profile_btn = Button(text=profile['profile_name'])
-                profile_box.add(profile_btn)
+                profile_box = Box(style=Pack(flex=0, direction=ROW))
+                profile_btn = Button(
+                    id=f'{profile['profile_name']}_profile',
+                    style=Pack(flex=1),
+                    text=profile['profile_name']
+                )
+
+                profile_edit_btn = Button(
+                    id=f'{profile['profile_name']}_profile_edit',
+                    text='Редактировать'
+                )
+
+                def profile_del(widget):
+                    profiles = self.Settings.load_settings(self.SETTINGS_FILE)
+                    widget_id = widget.id
+                    profile_name_for_del = widget_id[:widget_id.rfind("_profile")]
+
+                    for i, item in enumerate(profiles):
+                        if item.get("profile_name") == profile_name_for_del:
+                            del profiles[i]
+                            break
+
+                    self.Settings.save_settings(self.SETTINGS_FILE, profiles)
+                    self.show_profiles_view(widget)
+
+                profile_del_btn = Button(
+                    id=f'{profile['profile_name']}_profile_del',
+                    text='Удалить',
+                    on_press=profile_del,
+                )
+
+                profile_box.add(profile_btn, profile_edit_btn, profile_del_btn)
                 profiles_box.add(profile_box)
 
         self.body_box.add(profiles_box)
@@ -82,8 +112,8 @@ class MeterReadingTransmitter(toga.App):
         self.body_box.clear()
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
         name_profile_label = Label(style=Pack(flex=0), text='Имя профиля')
-        name_profile_txt_input = TextInput(style=Pack(flex=1))
-        name_profile_box.add(name_profile_label, name_profile_txt_input)
+        profile_name_txt_input = TextInput(style=Pack(flex=1))
+        name_profile_box.add(name_profile_label, profile_name_txt_input)
         self.body_box.add(name_profile_box, self.campaigns_box)
 
         self.footer_box.clear()
@@ -103,11 +133,11 @@ class MeterReadingTransmitter(toga.App):
         return_btn = Button(text='Назад', style=Pack(flex=1), on_press=self.show_profiles_view)
 
         def create_profile(widget):
-            name_profile = name_profile_txt_input.value
+            profile_name = profile_name_txt_input.value
             if self.SETTINGS_CAMPAIGNS_FOR_ADD:
 
                 settings_for_add = {
-                    'profile_name': name_profile,
+                    'profile_name': profile_name,
                     'campaigns': []
                 }
 
