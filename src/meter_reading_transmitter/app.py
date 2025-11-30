@@ -1,9 +1,9 @@
 """
 An application for transmitting meter readings
 """
+from dataclasses import dataclass, asdict, field
 import json
 import os
-import re
 
 import requests
 import toga
@@ -195,6 +195,19 @@ class MeterReadingTransmitter(toga.App):
         return_btn_box.add(return_btn)
 
         self.footer_box.add(return_btn_box)
+
+
+    @dataclass
+    class Profile:
+        profile_name: str
+        campaigns: list[dict[str, str]] = field(default_factory=list)
+
+
+    @dataclass
+    class Campaign:
+        name: str
+        url: str
+
 
 
     class KVC:
