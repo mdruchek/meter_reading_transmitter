@@ -2,7 +2,8 @@ from typing import Any
 from pydantic import BaseModel
 
 class CampaignModel(BaseModel):
-    name: str
+    key: str
+    title: str
     region_id: int | None = None
     region_name: str | None = None
     personal_account: str
