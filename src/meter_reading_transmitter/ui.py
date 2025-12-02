@@ -10,7 +10,7 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
 from .models import Profile
-from .campaigns import KVCCampaign, CampaignInterface
+from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
 from .settings_storage import Settings
 
 
@@ -20,7 +20,12 @@ class MeterReadingTransmitter(toga.App):
 
     def __init__(self, **kwargs):
         super().__init__(formal_name="Передача показаний счетчиков", **kwargs)
-
+        
+        self.campaign_registry = CAMPAIGN_REGISTRY
+        self.current_campaign = None
+        self.settings_campaigns_for_add: list[dict] = []
+        
+        
         self.view_box = Box(style=Pack(direction=COLUMN))
         self.header_box = Box(style=Pack(direction=COLUMN, margin=5))
         self.body_box = Box(style=Pack(direction=COLUMN, margin=5, flex=1))
@@ -29,9 +34,6 @@ class MeterReadingTransmitter(toga.App):
         self.view_box.add(self.header_box, self.body_box, self.footer_box)
 
         self.campaigns_box = Box(style=Pack(flex=1, direction=COLUMN))
-        self.settings_campaigns_for_add: list[dict] = []
-
-#       self.current_campaign: CampaignInterface = KVCCampaign
 
     def startup(self):
         self.main_window = toga.MainWindow(title=self.formal_name)
@@ -67,7 +69,7 @@ class MeterReadingTransmitter(toga.App):
                 def profile_del(widget):
                     profile_id = widget.id
                     profile_name_for_del = widget_id[: widget_id.rfind("_profile")]
-                    Settings.deletesetting(selfSETTINGS_FILE, key='profile_name', profile_name_for_del)
+                    Settings.delete_setting(self, SETTINGS_FILE, key='profile_name', profile_name_for_del)
                     self.show_profiles_view(widget)
 
                 profile_del_btn = Button(
@@ -159,14 +161,18 @@ class MeterReadingTransmitter(toga.App):
 
         self.body_box.clear()
         campaigns_box = Box(style=Pack(direction=ROW, flex=1))
-
-        campaign_kvc_btn = Button(
-            style=Pack(flex=1),
-            text=KVCCampaign.name,
-    #####        on_press=self.show_current_campaign_view,
-        )
-
-        campaigns_box.add(campaign_kvc_btn)
+        
+        def select_campaign(widget, key):
+            self.current_campaign = self.campaign_registry.get(key)
+        
+        for campaign_key, campaign_obj in self.campaign_registry.items():
+            campaign_btn = Button(
+                style=Pack(flex=0),
+                text=campaign_obj.title,
+                on_press=lambda widget: self.select_campaign(widget, campaign_key),
+            )
+            campaigns_box.add(campaign_btn)
+        
         self.body_box.add(campaigns_box)
 
         self.footer_box.clear()
@@ -179,16 +185,22 @@ class MeterReadingTransmitter(toga.App):
         return_btn_box.add(return_btn)
         self.footer_box.add(return_btn_box)
 
- ###   def show_current_campaign_view(self, widget):
+    def show_campaigns_settings_view(self, widget):
         self.header_box.clear()
         head_label = Label(text="Данные кампании")
         self.header_box.add(head_label)
 
         self.body_box.clear()
-        region_box = Box(style=Pack(direction=COLUMN, flex=0))
- ###       regions = self.current_campaign.get_active_regions()
-        region_selection = Selection(items=regions, accessor="name")
-        region_box.add(region_selection)
+    
+        if self.current_campaign.region_required:
+            region_box = Box(style=Pack(direction=COLUMN, flex=0))
+            regions = self.current_campaign.get_active_regions()
+            region_selection = Selection(items=regions, accessor="name")
+            region_box.add(region_selection)
+            self.body_box.add(region_box)
+            region_box.add(region_selection)
+        else:
+            region_box = None
 
         personal_account_box = Box(style=Pack(direction=ROW, flex=1))
         personal_account_label = Label(text="Лицевой счет:", style=Pack(flex=0))
@@ -200,23 +212,30 @@ class MeterReadingTransmitter(toga.App):
         add_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
 
         def on_add_campaign(widget):
-            region_row = region_selection.value
-            region_name = region_row.name
-            region_id = region_row.id
+            region_name = None
+            region_id = None
+        
+            if self.current_campaign.region_required:
+                region_row = region_selection.value
+                region_name = region_row.name
+                region_id = region_row.id
+        
             personal_account = personal_account_txt_input.value
 
- ###           campaign = self.current_campaign.make_campaign(
+            campaign = self.current_campaign.make_campaign_profile(
                 region_id=region_id,
                 region_name=region_name,
                 personal_account=personal_account,
             )
 
-            self.settings_campaigns_for_add.append(campaign.to_dict())
+            self.settings_campaigns_for_add.append(campaign.model_dump())
 
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
+        
             campaign_label = Label(
                 text=f'Добавлена кампания "{campaign.name}"'
             )
+        
             campaign_box.add(campaign_label)
             self.campaigns_box.add(campaign_box)
 

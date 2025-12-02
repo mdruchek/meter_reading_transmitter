@@ -16,14 +16,17 @@ class CampaignInterface(ABC):
     @staticmethod
     @abstractmethod
     def make_campaign(
-        personal_account: str,
-    ) -> CampaignData:
+        key: str,
+        title: str,
+        region_required: bool
+    ) -> CampaignModel:
         ...
 
 
 class KVCCampaign(CampaignInterface):
     key = "kvc"
     title = "КВЦ"
+    region_required = True
 
     @staticmethod
     def get_active_regions() -> list[dict]:
@@ -45,14 +48,14 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
-    def make_campaign(
+    def make_campaign_profile(
         region_id: int,
         region_name: str,
         personal_account: str,
-    ) -> CampaignData:
-        return CampaignData(
-            key='title',
-            title="КВЦ",
+    ) -> CampaigModel:
+        return CampaignModel(
+            key=KVCCampaign.key,
+            title=KVCCampaign.title,
             region_id=region_id,
             region_name=region_name,
             personal_account=personal_account,
