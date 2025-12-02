@@ -1,22 +1,10 @@
-from abc import ABC, abstractmethod
-import requests
-
-from .models import CampaignData
-
 
 class CampaignInterface(ABC):
     name: str
 
     @staticmethod
     @abstractmethod
-    def get_active_regions() -> list[dict]:
-        ...
-
-    @staticmethod
-    @abstractmethod
     def make_campaign(
-        region_id: int,
-        region_name: str,
         personal_account: str,
     ) -> CampaignData:
         ...
@@ -56,3 +44,52 @@ class KVCCampaign(CampaignInterface):
             region_name=region_name,
             personal_account=personal_account,
         )
+
+# campaigns.py
+from abc import ABC, abstractmethod
+import requests
+
+from .models import CampaignData
+
+
+class CampaignInterface(ABC):
+    key: str
+    title: str
+
+    @staticmethod
+    @abstractmethod
+    def make_campaign(
+        personal_account: str,
+    ) -> CampaignData:
+        ...
+
+
+class KVCCampaign(CampaignInterface):
+    key = "kvc"
+    title = "КВЦ"
+
+    @staticmethod
+    def get_active_regions() -> list[dict]:
+        url = "https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions"
+        resp = requests.post(url)
+        return resp.json()
+
+    @staticmethod
+    def make_campaign(
+        region_id: int,
+        region_name: str,
+        personal_account: str,
+    ) -> CampaignData:
+        return CampaignData(
+            name="квц",
+            region_id=region_id,
+            region_name=region_name,
+            personal_account=personal_account,
+        )
+
+
+# сюда позже добавишь другие кампании
+CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
+    KVCCampaign.key: KVCCampaign,
+    # "other": OtherCampaign,
+}

@@ -19,7 +19,7 @@ class MeterReadingTransmitter(toga.App):
     SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
 
     def __init__(self, **kwargs):
-        super().__init__(formal_name="передача показаний счетчиков", **kwargs)
+        super().__init__(formal_name="Передача показаний счетчиков", **kwargs)
 
         self.view_box = Box(style=Pack(direction=COLUMN))
         self.header_box = Box(style=Pack(direction=COLUMN, margin=5))
@@ -31,8 +31,7 @@ class MeterReadingTransmitter(toga.App):
         self.campaigns_box = Box(style=Pack(flex=1, direction=COLUMN))
         self.settings_campaigns_for_add: list[dict] = []
 
-        # текущая выбранная кампания (интерфейс)
-        self.current_campaign: CampaignInterface = KVCCampaign
+#       self.current_campaign: CampaignInterface = KVCCampaign
 
     def startup(self):
         self.main_window = toga.MainWindow(title=self.formal_name)
@@ -40,17 +39,16 @@ class MeterReadingTransmitter(toga.App):
         self.show_profiles_view(widget=None)
         self.main_window.show()
 
-    # ---------- Профили ----------
-
     def show_profiles_view(self, widget):
         self.header_box.clear()
-        header_label = Label(text="профили", style=Pack(flex=1))
+        header_label = Label(text="Профили", style=Pack(flex=1))
         self.header_box.add(header_label)
 
         self.body_box.clear()
         settings = Settings.load_settings(self.SETTINGS_FILE)
 
         profiles_box = Box(style=Pack(direction=COLUMN, flex=1))
+        
         if settings:
             for profile in settings:
                 profile_box = Box(style=Pack(flex=0, direction=ROW))
@@ -67,14 +65,9 @@ class MeterReadingTransmitter(toga.App):
                 )
 
                 def profile_del(widget):
-                    profiles = Settings.load_settings(self.SETTINGS_FILE)
-                    widget_id = widget.id
+                    profile_id = widget.id
                     profile_name_for_del = widget_id[: widget_id.rfind("_profile")]
-                    for i, item in enumerate(profiles):
-                        if item.get("profile_name") == profile_name_for_del:
-                            del profiles[i]
-                            break
-                    Settings.save_settings(self.SETTINGS_FILE, profiles)
+                    Settings.deletesetting(selfSETTINGS_FILE, key='profile_name', profile_name_for_del)
                     self.show_profiles_view(widget)
 
                 profile_del_btn = Button(
@@ -98,36 +91,35 @@ class MeterReadingTransmitter(toga.App):
         create_profile_btn_box.add(create_profile_btn)
         self.footer_box.add(create_profile_btn_box)
 
-    # ---------- Создание профиля ----------
-
     def show_create_profile_view(self, widget):
         if widget is not None and widget.id == "create_profile_btn":
             self.settings_campaigns_for_add.clear()
             self.campaigns_box.clear()
 
         self.header_box.clear()
-        header_label = Label(text="создание нового профиля")
+        header_label = Label(text="Создание нового профиля")
         self.header_box.add(header_label)
 
         self.body_box.clear()
-
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
         name_profile_label = Label(style=Pack(flex=0), text="Имя профиля")
         profile_name_txt_input = TextInput(style=Pack(flex=1))
         name_profile_box.add(name_profile_label, profile_name_txt_input)
-
         self.body_box.add(name_profile_box, self.campaigns_box)
 
         self.footer_box.clear()
         choose_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
+        
         choose_campaign_btn = Button(
             style=Pack(flex=1),
             text="Выбрать кампанию",
             on_press=self.show_choice_campaign_view,
         )
+        
         choose_campaign_btn_box.add(choose_campaign_btn)
 
         create_profile_box = Box(style=Pack(direction=ROW, flex=0))
+        
         return_btn = Button(
             text="Назад", style=Pack(flex=1), on_press=self.show_profiles_view
         )
@@ -160,11 +152,9 @@ class MeterReadingTransmitter(toga.App):
         create_profile_box.add(return_btn, create_profile_btn)
         self.footer_box.add(choose_campaign_btn_box, create_profile_box)
 
-    # ---------- Выбор кампании ----------
-
     def show_choice_campaign_view(self, widget):
         self.header_box.clear()
-        header_label = Label(text="выбор кампании")
+        header_label = Label(text="Выбор кампании")
         self.header_box.add(header_label)
 
         self.body_box.clear()
@@ -172,8 +162,8 @@ class MeterReadingTransmitter(toga.App):
 
         campaign_kvc_btn = Button(
             style=Pack(flex=1),
-            text=self.current_campaign.name,
-            on_press=self.show_current_campaign_view,
+            text=KVCCampaign.name,
+    #####        on_press=self.show_current_campaign_view,
         )
 
         campaigns_box.add(campaign_kvc_btn)
@@ -189,17 +179,14 @@ class MeterReadingTransmitter(toga.App):
         return_btn_box.add(return_btn)
         self.footer_box.add(return_btn_box)
 
-    # ---------- Экран ввода данных текущей кампании (KVC) ----------
-
-    def show_current_campaign_view(self, widget):
+ ###   def show_current_campaign_view(self, widget):
         self.header_box.clear()
-        head_label = Label(text="данные кампании")
+        head_label = Label(text="Данные кампании")
         self.header_box.add(head_label)
 
         self.body_box.clear()
-
         region_box = Box(style=Pack(direction=COLUMN, flex=0))
-        regions = self.current_campaign.get_active_regions()
+ ###       regions = self.current_campaign.get_active_regions()
         region_selection = Selection(items=regions, accessor="name")
         region_box.add(region_selection)
 
@@ -207,7 +194,6 @@ class MeterReadingTransmitter(toga.App):
         personal_account_label = Label(text="Лицевой счет:", style=Pack(flex=0))
         personal_account_txt_input = TextInput(style=Pack(flex=1))
         personal_account_box.add(personal_account_label, personal_account_txt_input)
-
         self.body_box.add(region_box, personal_account_box)
 
         self.footer_box.clear()
@@ -219,7 +205,7 @@ class MeterReadingTransmitter(toga.App):
             region_id = region_row.id
             personal_account = personal_account_txt_input.value
 
-            campaign = self.current_campaign.make_campaign(
+ ###           campaign = self.current_campaign.make_campaign(
                 region_id=region_id,
                 region_name=region_name,
                 personal_account=personal_account,
@@ -229,7 +215,7 @@ class MeterReadingTransmitter(toga.App):
 
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
             campaign_label = Label(
-                text=f'добавлена кампания "{campaign.name}"'
+                text=f'Добавлена кампания "{campaign.name}"'
             )
             campaign_box.add(campaign_label)
             self.campaigns_box.add(campaign_box)
@@ -241,6 +227,7 @@ class MeterReadingTransmitter(toga.App):
             text="Добавить кампанию",
             on_press=on_add_campaign,
         )
+        
         add_campaign_btn_box.add(add_campaign_btn)
 
         return_btn_box = Box(style=Pack(direction=ROW, flex=0))
