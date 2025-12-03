@@ -25,11 +25,11 @@ class Settings:
 
     @classmethod
     def delete_setting(cls, file_name, key, value):
-        settings = cls.load_settings(file_name)
+        settings: list = cls.load_settings(file_name)
 
-        for i, item in enumerate(settings):
-            if item.get(key) == value:
-                del profiles[i]
+        for i, setting in enumerate(settings):
+            if setting.get(key) == value:
+                del settings[i]
                 break
         
-        Settings.save_settings(self.SETTINGS_FILE, profiles)
+        Settings.save_settings(cls.SETTINGS_FILE, settings)

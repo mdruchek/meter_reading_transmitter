@@ -1,12 +1,7 @@
 from abc import ABC, abstractmethod
 import requests
 
-from .models import CampaignData
-
-
-CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
-    KVCCampaign.key: KVCCampaign,
-}
+from .models import CampaignModel
 
 
 class CampaignInterface(ABC):
@@ -52,7 +47,7 @@ class KVCCampaign(CampaignInterface):
         region_id: int,
         region_name: str,
         personal_account: str,
-    ) -> CampaigModel:
+    ) -> CampaignModel:
         return CampaignModel(
             key=KVCCampaign.key,
             title=KVCCampaign.title,
@@ -60,3 +55,8 @@ class KVCCampaign(CampaignInterface):
             region_name=region_name,
             personal_account=personal_account,
         )
+
+
+CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
+    KVCCampaign.key: KVCCampaign,
+}

@@ -9,7 +9,7 @@ from toga import Box, Button, Label, TextInput, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
-from .models import Profile
+from .models import ProfileModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
 from .settings_storage import Settings
 
@@ -67,9 +67,9 @@ class MeterReadingTransmitter(toga.App):
                 )
 
                 def profile_del(widget):
-                    profile_id = widget.id
-                    profile_name_for_del = widget_id[: widget_id.rfind("_profile")]
-                    Settings.delete_setting(self, SETTINGS_FILE, key='profile_name', profile_name_for_del)
+                    profile_btn_id = widget.id
+                    profile_name_for_del = profile_btn_id[: profile_btn_id.rfind("_profile")]
+                    Settings.delete_setting(self.SETTINGS_FILE, key='profile_name', value=profile_name_for_del)
                     self.show_profiles_view(widget)
 
                 profile_del_btn = Button(
@@ -111,17 +111,17 @@ class MeterReadingTransmitter(toga.App):
 
         self.footer_box.clear()
         choose_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
-        
+
         choose_campaign_btn = Button(
             style=Pack(flex=1),
             text="Выбрать кампанию",
             on_press=self.show_choice_campaign_view,
         )
-        
+
         choose_campaign_btn_box.add(choose_campaign_btn)
 
         create_profile_box = Box(style=Pack(direction=ROW, flex=0))
-        
+
         return_btn = Button(
             text="Назад", style=Pack(flex=1), on_press=self.show_profiles_view
         )
@@ -161,18 +161,19 @@ class MeterReadingTransmitter(toga.App):
 
         self.body_box.clear()
         campaigns_box = Box(style=Pack(direction=ROW, flex=1))
-        
+
         def select_campaign(widget, key):
             self.current_campaign = self.campaign_registry.get(key)
-        
+            self.show_campaigns_settings_view(widget=widget)
+
         for campaign_key, campaign_obj in self.campaign_registry.items():
             campaign_btn = Button(
                 style=Pack(flex=0),
                 text=campaign_obj.title,
-                on_press=lambda widget: self.select_campaign(widget, campaign_key),
+                on_press=lambda widget: select_campaign(widget, campaign_key),
             )
             campaigns_box.add(campaign_btn)
-        
+
         self.body_box.add(campaigns_box)
 
         self.footer_box.clear()
@@ -191,7 +192,7 @@ class MeterReadingTransmitter(toga.App):
         self.header_box.add(head_label)
 
         self.body_box.clear()
-    
+
         if self.current_campaign.region_required:
             region_box = Box(style=Pack(direction=COLUMN, flex=0))
             regions = self.current_campaign.get_active_regions()
@@ -214,12 +215,12 @@ class MeterReadingTransmitter(toga.App):
         def on_add_campaign(widget):
             region_name = None
             region_id = None
-        
+
             if self.current_campaign.region_required:
                 region_row = region_selection.value
                 region_name = region_row.name
                 region_id = region_row.id
-        
+
             personal_account = personal_account_txt_input.value
 
             campaign = self.current_campaign.make_campaign_profile(
@@ -231,11 +232,11 @@ class MeterReadingTransmitter(toga.App):
             self.settings_campaigns_for_add.append(campaign.model_dump())
 
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
-        
+
             campaign_label = Label(
-                text=f'Добавлена кампания "{campaign.name}"'
+                text=f'Добавлена кампания "{campaign.title}"'
             )
-        
+
             campaign_box.add(campaign_label)
             self.campaigns_box.add(campaign_box)
 
@@ -246,7 +247,7 @@ class MeterReadingTransmitter(toga.App):
             text="Добавить кампанию",
             on_press=on_add_campaign,
         )
-        
+
         add_campaign_btn_box.add(add_campaign_btn)
 
         return_btn_box = Box(style=Pack(direction=ROW, flex=0))
