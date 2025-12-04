@@ -15,9 +15,6 @@ from .settings_storage import Settings
 
 
 class MeterReadingTransmitter(toga.App):
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    SETTINGS_FILE = os.path.join(BASE_DIR, "settings.json")
-
     def __init__(self, **kwargs):
         super().__init__(formal_name="Передача показаний счетчиков", **kwargs)
         
@@ -47,7 +44,7 @@ class MeterReadingTransmitter(toga.App):
         self.header_box.add(header_label)
 
         self.body_box.clear()
-        settings = Settings.load_settings(self.SETTINGS_FILE)
+        settings = Settings.load_settings()
 
         profiles_box = Box(style=Pack(direction=COLUMN, flex=1))
         
@@ -69,7 +66,7 @@ class MeterReadingTransmitter(toga.App):
                 def profile_del(widget):
                     profile_btn_id = widget.id
                     profile_name_for_del = profile_btn_id[: profile_btn_id.rfind("_profile")]
-                    Settings.delete_setting(self.SETTINGS_FILE, key='profile_name', value=profile_name_for_del)
+                    Settings.delete_setting(key='profile_name', value=profile_name_for_del)
                     self.show_profiles_view(widget)
 
                 profile_del_btn = Button(
@@ -135,12 +132,12 @@ class MeterReadingTransmitter(toga.App):
                 }
                 settings_for_add["campaigns"].append(self.settings_campaigns_for_add)
 
-                settings_upload = Settings.load_settings(self.SETTINGS_FILE)
+                settings_upload = Settings.load_settings()
                 if settings_upload:
                     settings_upload.append(settings_for_add)
                 else:
                     settings_upload = [settings_for_add]
-                Settings.save_settings(self.SETTINGS_FILE, settings_upload)
+                Settings.save_settings(settings_upload)
 
                 self.settings_campaigns_for_add = []
                 self.show_profiles_view(widget)
