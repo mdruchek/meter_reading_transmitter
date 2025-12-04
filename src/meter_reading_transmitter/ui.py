@@ -13,6 +13,7 @@ from toga.style.pack import COLUMN, ROW
 from .models import ProfileModel, CampaignModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
 from .settings_storage import Settings
+from .validators import MoEmptyValidator
 
 
 class MeterReadingTransmitter(toga.App):
@@ -103,7 +104,12 @@ class MeterReadingTransmitter(toga.App):
         self.body_box.clear()
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
         name_profile_label = Label(style=Pack(flex=0), text="Имя профиля")
-        profile_name_txt_input = TextInput(style=Pack(flex=1))
+        
+        profile_name_txt_input = TextInput(
+            style=Pack(flex=1),
+            validators=[NoEmptyValidator()],
+        )
+        
         name_profile_box.add(name_profile_label, profile_name_txt_input)
         self.body_box.add(name_profile_box, self.campaigns_box)
 
@@ -205,7 +211,12 @@ class MeterReadingTransmitter(toga.App):
 
         personal_account_box = Box(style=Pack(direction=ROW, flex=1))
         personal_account_label = Label(text="Лицевой счет:", style=Pack(flex=0))
-        personal_account_txt_input = TextInput(style=Pack(flex=1))
+        
+        personal_account_txt_input = TextInput(
+            style=Pack(flex=1),
+            validators=[MoEmptyValidator()]
+        )
+        
         personal_account_box.add(personal_account_label, personal_account_txt_input)
         self.body_box.add(region_box, personal_account_box)
 
