@@ -55,6 +55,22 @@ class KVCCampaign(CampaignInterface):
             region_name=region_name,
             personal_account=personal_account,
         )
+        
+        
+class TNScompaign(CompaignInterface):
+    key = "tns"
+    title = "ТНС"
+    region_required = False
+    
+    @staticmethod
+    def make_campaign_profile(
+        personal_account: str,
+    ) -> CampaignModel:
+        return CampaignModel(
+            key=KVCCampaign.key,
+            title=KVCCampaign.title,
+            personal_account=personal_account,
+        )
 
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
