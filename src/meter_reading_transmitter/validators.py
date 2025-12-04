@@ -1,12 +1,6 @@
-from toga.validators import Validator
-
-class NotEmptyValidator(Validator):
-    def validate(self, value: str) -> str | None:
-        text = (value or "").strip()
-        if text:
-            self.widget.style.update(border_color=None)
+class Validators:
+    def not_empty_validator(text: str) -> str | None:
+        if (text or "").strip():
             return None
         else:
-            self.widget.style.update(border_color="#cc6666")
-            self.widget.placeholder = "Обязательное поле"
-            return "Обязательное поле"
+            return "Имя профиля обязательно"
