@@ -3,6 +3,7 @@ An application for transmitting meter readings
 """
 
 import os
+from pydantic import ValidationError
 
 import toga
 from toga import Box, Button, Label, TextInput, Selection
@@ -20,7 +21,7 @@ class MeterReadingTransmitter(toga.App):
         
         self.campaign_registry = CAMPAIGN_REGISTRY
         self.current_campaign = None
-        self.settings_campaigns_for_add: list[dict] = []
+        self.settings_campaigns_for_add: list[CampaignModel] = []
         
         
         self.view_box = Box(style=Pack(direction=COLUMN))
@@ -53,13 +54,13 @@ class MeterReadingTransmitter(toga.App):
                 profile_box = Box(style=Pack(flex=0, direction=ROW))
 
                 profile_btn = Button(
-                    id=f'{profile["profile_name"]}_profile',
+                    id=f'{profile.profile_name}_profile',
                     style=Pack(flex=1),
                     text=profile.profile_name,
                 )
 
                 profile_edit_btn = Button(
-                    id=f'{profile["profile_name"]}_profile_edit',
+                    id=f'{profile.profile_name}_profile_edit',
                     text="Редактировать",
                 )
 
@@ -70,7 +71,7 @@ class MeterReadingTransmitter(toga.App):
                     self.show_profiles_view(widget)
 
                 profile_del_btn = Button(
-                    id=f'{profile["profile_name"]}_profile_del',
+                    id=f'{profile.profile_name}_profile_del',
                     text="Удалить",
                     on_press=profile_del,
                 )
@@ -126,16 +127,16 @@ class MeterReadingTransmitter(toga.App):
         def create_profile(widget):
             profile_name = profile_name_txt_input.value
             if self.settings_campaigns_for_add:
-                campaigns: list[CampaignModels] = self.settings_campaigns_for_add
+                campaigns: list[CampaignModel] = self.settings_campaigns_for_add
                 
-                profile_for_add_raw: dict[str, str | list[object] = {
+                profile_for_add_raw: dict[str, str | list[object]] = {
                     "profile_name": profile_name,
                     "campaigns": campaigns,
                 }
                 try:
                     profile = ProfileModel(**profile_for_add_raw)
                     settings_upload = Settings.load_settings()
-                    settings_upload.append(settings_for_add)
+                    settings_upload.append(profile)
                     Settings.save_settings(settings_upload)
 
                     self.settings_campaigns_for_add.clear()

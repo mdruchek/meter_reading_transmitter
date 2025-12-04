@@ -1,7 +1,7 @@
 import json
 from pydantic import ValidationError
 
-from .models import Profile
+from .models import ProfileModel
 
 from .config import SETTINGS_FILE
 
@@ -14,11 +14,11 @@ class Settings:
         try:
             with open(cls.settings_file, "r", encoding="utf-8") as file:
                 settings_raw = json.load(file)
-                profiles: list[Profile] = []
+                profiles: list[ProfileModel] = []
 
                 for setting in settings_raw:
                     try:
-                        profiles.append(Profile(**setting))
+                        profiles.append(ProfileModel(**setting))
                     except ValidationError as e:
                         print("Bad profile in settings.json:", e)
 
@@ -30,8 +30,8 @@ class Settings:
             return []
 
     @classmethod
-    def save_settings(cls, profiles: list[Profile]):
-        profile_raw = [profile.model_damp() for profile in profiles]
+    def save_settings(cls, profiles: list[ProfileModel]):
+        profile_raw = [profile.model_dump() for profile in profiles]
         with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
             json.dump(profile_raw, file, indent=4, ensure_ascii=False)
 
@@ -46,5 +46,5 @@ class Settings:
         if key == 'profile_name':
             profiles: list = cls.load_settings()
             profiles = [profile for profile in profiles if profile.profile_name != value]
-        
-        Settings.save_settings(settings)
+
+        Settings.save_settings(profiles)

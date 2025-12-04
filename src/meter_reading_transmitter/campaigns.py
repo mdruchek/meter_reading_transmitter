@@ -57,7 +57,7 @@ class KVCCampaign(CampaignInterface):
         )
         
         
-class TNScompaign(CompaignInterface):
+class TNScompaign(CampaignInterface):
     key = "tns"
     title = "ТНС"
     region_required = False
@@ -75,4 +75,5 @@ class TNScompaign(CompaignInterface):
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
     KVCCampaign.key: KVCCampaign,
+    TNScompaign.key: TNScompaign
 }
