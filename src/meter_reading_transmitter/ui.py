@@ -9,7 +9,7 @@ from toga import Box, Button, Label, TextInput, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 
-from .models import ProfileModel
+from .models import ProfileModel, CampaignModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
 from .settings_storage import Settings
 
@@ -44,18 +44,18 @@ class MeterReadingTransmitter(toga.App):
         self.header_box.add(header_label)
 
         self.body_box.clear()
-        settings = Settings.load_settings()
+        profiles = Settings.load_settings()
 
         profiles_box = Box(style=Pack(direction=COLUMN, flex=1))
         
-        if settings:
-            for profile in settings:
+        if profiles:
+            for profile in profiles:
                 profile_box = Box(style=Pack(flex=0, direction=ROW))
 
                 profile_btn = Button(
                     id=f'{profile["profile_name"]}_profile',
                     style=Pack(flex=1),
-                    text=profile["profile_name"],
+                    text=profile.profile_name,
                 )
 
                 profile_edit_btn = Button(
@@ -126,21 +126,23 @@ class MeterReadingTransmitter(toga.App):
         def create_profile(widget):
             profile_name = profile_name_txt_input.value
             if self.settings_campaigns_for_add:
-                settings_for_add: dict[str, object] = {
+                campaigns: list[CampaignModels] = self.settings_campaigns_for_add
+                
+                profile_for_add_raw: dict[str, str | list[object] = {
                     "profile_name": profile_name,
-                    "campaigns": [],
+                    "campaigns": campaigns,
                 }
-                settings_for_add["campaigns"].append(self.settings_campaigns_for_add)
-
-                settings_upload = Settings.load_settings()
-                if settings_upload:
+                try:
+                    profile = ProfileModel(**profile_for_add_raw)
+                    settings_upload = Settings.load_settings()
                     settings_upload.append(settings_for_add)
-                else:
-                    settings_upload = [settings_for_add]
-                Settings.save_settings(settings_upload)
+                    Settings.save_settings(settings_upload)
 
-                self.settings_campaigns_for_add = []
-                self.show_profiles_view(widget)
+                    self.settings_campaigns_for_add.clear()
+                    self.show_profiles_view(widget)
+                
+                except ValidationError as e:
+                    print("Bad profile in settings.json:", e)
 
         create_profile_btn = Button(
             style=Pack(flex=1),
