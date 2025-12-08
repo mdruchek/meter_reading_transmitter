@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pydantic import ValidationError
 import requests
 
 from .models import CampaignModel
@@ -48,13 +49,20 @@ class KVCCampaign(CampaignInterface):
         region_name: str,
         personal_account: str,
     ) -> CampaignModel:
-        return CampaignModel(
-            key=KVCCampaign.key,
-            title=KVCCampaign.title,
-            region_id=region_id,
-            region_name=region_name,
-            personal_account=personal_account,
-        )
+
+        try:
+            campaign_profile = CampaignModel(
+                key=KVCCampaign.key,
+                title=KVCCampaign.title,
+                region_id=region_id,
+                region_name=region_name,
+                personal_account=personal_account,
+            )
+
+            return campaign_profile
+
+        except ValidationError as e:
+            print(e)
         
         
 class TNScompaign(CampaignInterface):
@@ -75,5 +83,5 @@ class TNScompaign(CampaignInterface):
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
     KVCCampaign.key: KVCCampaign,
-    TNScompaign.key: TNScompaign
+    # TNScompaign.key: TNScompaign
 }

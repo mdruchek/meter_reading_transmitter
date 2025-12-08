@@ -9,11 +9,12 @@ import toga
 from toga import Box, Button, Label, TextInput, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
+from toga.validators import Number
 
 from .models import ProfileModel, CampaignModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
 from .settings_storage import Settings
-from .validators import Validators
+from .validators import not_empty_validator
 
 
 class MeterReadingTransmitter(toga.App):
@@ -84,11 +85,13 @@ class MeterReadingTransmitter(toga.App):
 
         self.footer_box.clear()
         create_profile_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
+
         create_profile_btn = Button(
             id="create_profile_btn",
             text="Создать профиль",
             on_press=self.show_create_profile_view,
         )
+
         create_profile_btn_box.add(create_profile_btn)
         self.footer_box.add(create_profile_btn_box)
 
@@ -107,7 +110,6 @@ class MeterReadingTransmitter(toga.App):
         
         profile_name_txt_input = TextInput(
             style=Pack(flex=1),
-            validators=[Validators.not_empty_validator],
         )
         
         name_profile_box.add(name_profile_label, profile_name_txt_input)
@@ -214,11 +216,15 @@ class MeterReadingTransmitter(toga.App):
         
         personal_account_txt_input = TextInput(
             style=Pack(flex=1),
-            validators=[Validators.not_empty_validator]
+            validators=[Number(allow_empty=False), not_empty_validator]
         )
-        
+
         personal_account_box.add(personal_account_label, personal_account_txt_input)
-        self.body_box.add(region_box, personal_account_box)
+
+        if region_box:
+            self.body_box.add(region_box)
+
+        self.body_box.add(personal_account_box)
 
         self.footer_box.clear()
         add_campaign_btn_box = Box(style=Pack(direction=COLUMN, flex=0))
@@ -232,7 +238,7 @@ class MeterReadingTransmitter(toga.App):
                 region_name = region_row.name
                 region_id = region_row.id
 
-            personal_account = personal_account_txt_input.value
+            personal_account = personal_account_txt_input.value.strip()
 
             campaign = self.current_campaign.make_campaign_profile(
                 region_id=region_id,
