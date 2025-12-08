@@ -9,23 +9,23 @@ import toga
 from toga import Box, Button, Label, TextInput, Selection
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
-from toga.validators import Number
+from toga.validators import ContainsDigit, NotContains
 
 from .models import ProfileModel, CampaignModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
+from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
 from .settings_storage import Settings
-from .validators import not_empty_validator
 
 
 class MeterReadingTransmitter(toga.App):
     def __init__(self, **kwargs):
         super().__init__(formal_name="Передача показаний счетчиков", **kwargs)
-        
+
         self.campaign_registry = CAMPAIGN_REGISTRY
         self.current_campaign = None
         self.settings_campaigns_for_add: list[CampaignModel] = []
-        
-        
+
+
         self.view_box = Box(style=Pack(direction=COLUMN))
         self.header_box = Box(style=Pack(direction=COLUMN, margin=5))
         self.body_box = Box(style=Pack(direction=COLUMN, margin=5, flex=1))
@@ -50,7 +50,7 @@ class MeterReadingTransmitter(toga.App):
         profiles = Settings.load_settings()
 
         profiles_box = Box(style=Pack(direction=COLUMN, flex=1))
-        
+
         if profiles:
             for profile in profiles:
                 profile_box = Box(style=Pack(flex=0, direction=ROW))
@@ -107,11 +107,11 @@ class MeterReadingTransmitter(toga.App):
         self.body_box.clear()
         name_profile_box = Box(style=Pack(direction=ROW, flex=0))
         name_profile_label = Label(style=Pack(flex=0), text="Имя профиля")
-        
+
         profile_name_txt_input = TextInput(
             style=Pack(flex=1),
         )
-        
+
         name_profile_box.add(name_profile_label, profile_name_txt_input)
         self.body_box.add(name_profile_box, self.campaigns_box)
 
@@ -136,7 +136,7 @@ class MeterReadingTransmitter(toga.App):
             profile_name = profile_name_txt_input.value
             if self.settings_campaigns_for_add:
                 campaigns: list[CampaignModel] = self.settings_campaigns_for_add
-                
+
                 profile_for_add_raw: dict[str, str | list[object]] = {
                     "profile_name": profile_name,
                     "campaigns": campaigns,
@@ -149,7 +149,7 @@ class MeterReadingTransmitter(toga.App):
 
                     self.settings_campaigns_for_add.clear()
                     self.show_profiles_view(widget)
-                
+
                 except ValidationError as e:
                     print("Bad profile in settings.json:", e)
 
@@ -172,13 +172,14 @@ class MeterReadingTransmitter(toga.App):
 
         def select_campaign(widget, key):
             self.current_campaign = self.campaign_registry.get(key)
+            print(self.current_campaign)
             self.show_campaigns_settings_view(widget=widget)
 
         for campaign_key, campaign_obj in self.campaign_registry.items():
             campaign_btn = Button(
                 style=Pack(flex=0),
                 text=campaign_obj.title,
-                on_press=lambda widget: select_campaign(widget, campaign_key),
+                on_press=lambda widget, key=campaign_key: select_campaign(widget, key),
             )
             campaigns_box.add(campaign_btn)
 
@@ -213,10 +214,19 @@ class MeterReadingTransmitter(toga.App):
 
         personal_account_box = Box(style=Pack(direction=ROW, flex=1))
         personal_account_label = Label(text="Лицевой счет:", style=Pack(flex=0))
-        
+
+        def _on_change(widget):
+            del personal_account_txt_input.style.background_color
+            if not widget.is_valid:
+                personal_account_txt_input.style.background_color = PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
+
         personal_account_txt_input = TextInput(
             style=Pack(flex=1),
-            validators=[Number(allow_empty=False), not_empty_validator]
+            validators=[
+                ContainsDigit(count=10, allow_empty=False),
+                NotContains(substring='-')
+            ],
+            on_change=_on_change
         )
 
         personal_account_box.add(personal_account_label, personal_account_txt_input)
@@ -240,18 +250,25 @@ class MeterReadingTransmitter(toga.App):
 
             personal_account = personal_account_txt_input.value.strip()
 
-            campaign = self.current_campaign.make_campaign_profile(
-                region_id=region_id,
-                region_name=region_name,
-                personal_account=personal_account,
+            campaign_obj_or_err = self.current_campaign.make_campaign_profile(
+                _region_id=region_id,
+                _region_name=region_name,
+                _personal_account=personal_account,
             )
 
-            self.settings_campaigns_for_add.append(campaign.model_dump())
+            if isinstance(campaign_obj_or_err, str):
+                error_message = campaign_obj_or_err
+                personal_account_txt_input.value = None
+                personal_account_txt_input.placeholder = error_message
+                personal_account_txt_input.style.background_color = PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
+                return
+
+            self.settings_campaigns_for_add.append(campaign_obj_or_err.model_dump())
 
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
 
             campaign_label = Label(
-                text=f'Добавлена кампания "{campaign.title}"'
+                text=f'Добавлена кампания "{campaign_obj_or_err.title}"'
             )
 
             campaign_box.add(campaign_label)

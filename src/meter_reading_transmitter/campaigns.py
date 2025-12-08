@@ -45,24 +45,27 @@ class KVCCampaign(CampaignInterface):
 
     @staticmethod
     def make_campaign_profile(
-        region_id: int,
-        region_name: str,
-        personal_account: str,
-    ) -> CampaignModel:
+        _region_id: int,
+        _region_name: str,
+        _personal_account: str,
+    ) -> CampaignModel | str:
+
+        personal_account = (_personal_account or "").strip()
 
         try:
             campaign_profile = CampaignModel(
                 key=KVCCampaign.key,
                 title=KVCCampaign.title,
-                region_id=region_id,
-                region_name=region_name,
+                region_id=_region_id,
+                region_name=_region_name,
                 personal_account=personal_account,
             )
 
             return campaign_profile
 
         except ValidationError as e:
-            print(e)
+            message_error = 'лицевой счет жолжен содержать 10 цифр'
+            return message_error
         
         
 class TNScompaign(CampaignInterface):
@@ -83,5 +86,5 @@ class TNScompaign(CampaignInterface):
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
     KVCCampaign.key: KVCCampaign,
-    # TNScompaign.key: TNScompaign
+    TNScompaign.key: TNScompaign
 }
