@@ -12,7 +12,7 @@ from toga.style.pack import COLUMN, ROW
 from toga.validators import ContainsDigit, NotContains
 
 from .models import ProfileModel, CampaignModel
-from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface
+from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface, KVCCampaign
 from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
 from .settings_storage import Settings
 
@@ -59,6 +59,7 @@ class MeterReadingTransmitter(toga.App):
                     id=f'{profile.profile_name}_profile',
                     style=Pack(flex=1),
                     text=profile.profile_name,
+                    on_press=self.show_form_sending_data
                 )
 
                 profile_edit_btn = Button(
@@ -94,6 +95,23 @@ class MeterReadingTransmitter(toga.App):
 
         create_profile_btn_box.add(create_profile_btn)
         self.footer_box.add(create_profile_btn_box)
+
+    def show_form_sending_data(self, widget):
+        profile_btn_id = widget.id
+        profile_name_for_sending = profile_btn_id[: profile_btn_id.rfind("_profile")]
+        profiles = Settings.load_settings()
+        profile = next((p for p in profiles if p.profile_name == 'юб 16'), None)
+        campaigns_profile = profile.campaigns
+        # for campaign_profile in campaigns_profile:
+        #     print(campaigns_profile)
+        #пока одна КВЦ
+        campaign_profile = campaigns_profile[0]
+        locations_for_region = KVCCampaign.get_locations_for_region(campaign_profile.region_id)
+        print(locations_for_region)
+        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, campaign_profile.personal_account)
+        print(abonent_info)
+        message_for_abonent = KVCCampaign.get_message_for_abonent(locations_for_region, abonent_info['id'])
+        print(message_for_abonent)
 
     def show_create_profile_view(self, widget):
         if widget is not None and widget.id == "create_profile_btn":
@@ -172,7 +190,6 @@ class MeterReadingTransmitter(toga.App):
 
         def select_campaign(widget, key):
             self.current_campaign = self.campaign_registry.get(key)
-            print(self.current_campaign)
             self.show_campaigns_settings_view(widget=widget)
 
         for campaign_key, campaign_obj in self.campaign_registry.items():
@@ -223,7 +240,7 @@ class MeterReadingTransmitter(toga.App):
         personal_account_txt_input = TextInput(
             style=Pack(flex=1),
             validators=[
-                ContainsDigit(count=10, allow_empty=False),
+                ContainsDigit(count=PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, allow_empty=False),
                 NotContains(substring='-')
             ],
             on_change=_on_change

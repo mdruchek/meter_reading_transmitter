@@ -38,9 +38,25 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
-    def get_abonent_info(location_for_region: dict) -> dict:
+    def get_abonent_info(location_for_region: list[dict[str, str | int]], personal_account: str) -> dict:
         url = "https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo"
-        response = requests.post(url, json=location_for_region)
+        location_for_region_with_personal_account = {
+            "servDbs": location_for_region,
+            "lc": personal_account,
+            "target": 0
+        }
+
+        response = requests.post(url, json=location_for_region_with_personal_account)
+        return response.json()
+
+    @staticmethod
+    def get_message_for_abonent(location_for_region: list[dict[str, str | int]], id_abonent: int):
+        url = 'https://send.kvc-nn.ru/api/ControlIndications/GetMessageForAbonent'
+        request_data = {
+            "servDb": location_for_region[0],
+            "idA": id_abonent
+        }
+        response = requests.post(url, json=request_data)
         return response.json()
 
     @staticmethod
