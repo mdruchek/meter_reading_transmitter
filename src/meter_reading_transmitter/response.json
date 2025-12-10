@@ -1,0 +1,317 @@
+//get_location_for_region
+
+//response
+[
+    {
+        "server": "DBASES03",
+        "db_name": "co_vyksa",
+        "login": "",
+        "id_user": 0
+    },
+    {
+        "server": "DBASES03",
+        "db_name": "co_vyksa_gs",
+        "login": "",
+        "id_user": 0
+    },
+    {
+        "server": "DBASES03",
+        "db_name": "co_vyksa_os",
+        "login": "",
+        "id_user": 0
+    },
+    {
+        "server": "DBASES02",
+        "db_name": "tko_regoper05",
+        "login": "",
+        "id_user": 0
+    }
+]
+
+//get_abonent_info
+//response
+{
+    "id": 10021624,
+    "lc": "7201444   ",
+    "cod_rs": "44",
+    "dom_kv": "д.16 кв.14",
+    "fio": null,
+    "tn_name": "г ВЫКСА",
+    "st_name": "мкр ЮБИЛЕЙНЫЙ",
+    "id_adr": "52018001000*079  ",
+    "pass_ctr": null,
+    "location": {
+        "server": "DBASES03",
+        "db_name": "co_vyksa",
+        "login": null,
+        "id_user": null
+    },
+    "name_tn": "ВЫКСА г",
+    "name_st": "ЮБИЛЕЙНЫЙ мкр",
+    "gis_account": null,
+    "dom": "16",
+    "domb": "",
+    "kor": "",
+    "kvart": "14",
+    "komnata": ""
+}
+
+//get_cnt_list
+//url https://send.kvc-nn.ru/api/ControlIndications/GetCntList
+//request
+{"servDb":{"server":"DBASES03","db_name":"co_vyksa","login":null,"id_user":null},"lc":"7201444   "}
+//response
+[
+    {
+        "id_cnt": 58946,
+        "id_dummy": 58946,
+        "id_a": 10021624,
+        "lc": "7201444   ",
+        "id_serv": "07",
+        "number": "ГВ 537095                ",
+        "serv_name": "Горячее водоснабж.            ",
+        "id_gp": 256,
+        "id_ttype": "1T",
+        "id_type": "01",
+        "cnt_tarif_zone": "1",
+        "dat_lst": "ноябрь 2025",
+        "c_val_lst": "486",
+        "c_val_lst03": "0",
+        "c_val_lst04": "0",
+        "c_val_lst_check": "486",
+        "c_val_lst03_check": "0",
+        "c_val_lst04_check": "0",
+        "dat_b": "2025-11-01T00:00:00",
+        "dat_sn": "2031-07-31T00:00:00",
+        "db_name": "co_vyksa",
+        "server": "DBASES03",
+        "expirationNotice": 0,
+        "max_diff": 30,
+        "read_only": 0,
+        "avg_only": 0,
+        "status": null
+    },
+    {
+        "id_cnt": 58947,
+        "id_dummy": 58947,
+        "id_a": 10021624,
+        "lc": "7201444   ",
+        "id_serv": "07",
+        "number": "ГВ 537492                ",
+        "serv_name": "Горячее водоснабж.            ",
+        "id_gp": 256,
+        "id_ttype": "1T",
+        "id_type": "01",
+        "cnt_tarif_zone": "1",
+        "dat_lst": "ноябрь 2025",
+        "c_val_lst": "232",
+        "c_val_lst03": "0",
+        "c_val_lst04": "0",
+        "c_val_lst_check": "232",
+        "c_val_lst03_check": "0",
+        "c_val_lst04_check": "0",
+        "dat_b": "2025-11-01T00:00:00",
+        "dat_sn": "2031-07-31T00:00:00",
+        "db_name": "co_vyksa",
+        "server": "DBASES03",
+        "expirationNotice": 0,
+        "max_diff": 30,
+        "read_only": 0,
+        "avg_only": 0,
+        "status": null
+    },
+    {
+        "id_cnt": 58944,
+        "id_dummy": 58944,
+        "id_a": 10021624,
+        "lc": "7201444   ",
+        "id_serv": "08",
+        "number": "55630012                 ",
+        "serv_name": "Холодное водоснабж.           ",
+        "id_gp": 257,
+        "id_ttype": "1T",
+        "id_type": "01",
+        "cnt_tarif_zone": "1",
+        "dat_lst": "ноябрь 2025",
+        "c_val_lst": "894",
+        "c_val_lst03": "0",
+        "c_val_lst04": "0",
+        "c_val_lst_check": "894",
+        "c_val_lst03_check": "0",
+        "c_val_lst04_check": "0",
+        "dat_b": "2025-11-01T00:00:00",
+        "dat_sn": "2030-10-03T00:00:00",
+        "db_name": "co_vyksa",
+        "server": "DBASES03",
+        "expirationNotice": 0,
+        "max_diff": 30,
+        "read_only": 0,
+        "avg_only": 0,
+        "status": null
+    },
+    {
+        "id_cnt": 42673,
+        "id_dummy": 42673,
+        "id_a": 10021624,
+        "lc": "7201444   ",
+        "id_serv": "13",
+        "number": "01                       ",
+        "serv_name": "Электроснабжение              ",
+        "id_gp": 228,
+        "id_ttype": "2T",
+        "id_type": "01",
+        "cnt_tarif_zone": "2",
+        "dat_lst": "ноябрь 2025",
+        "c_val_lst": "13690",
+        "c_val_lst03": "13401",
+        "c_val_lst04": "0",
+        "c_val_lst_check": "13690",
+        "c_val_lst03_check": "13401",
+        "c_val_lst04_check": "0",
+        "dat_b": "2025-11-01T00:00:00",
+        "dat_sn": "2027-12-31T00:00:00",
+        "db_name": "co_vyksa",
+        "server": "DBASES03",
+        "expirationNotice": 0,
+        "max_diff": 1000,
+        "read_only": 0,
+        "avg_only": 0,
+        "status": null
+    }
+]
+
+//get_ctr_days
+//url https://send.kvc-nn.ru/api/ControlIndications/GetCtrDays
+//request
+{"servDb":{"server":"DBASES03","db_name":"co_vyksa","login":null,"id_user":null},"lc":"7201444   "}
+//response
+{"first":15,"last":22}
+
+//get_ctr_list
+//url  https://send.kvc-nn.ru/api/ControlIndications/GetCtrList
+//request
+{"lc":"7201444   ","servDb":{"server":"DBASES03","db_name":"co_vyksa","login":null,"id_user":null},"idCnt":58946}
+//response
+[
+    {
+        "id": 10930317,
+        "id_cnt": 58946,
+        "val_pr": 480.0000000000,
+        "val_lst": 486.0000000000,
+        "dat_b": "2025-11-01T00:00:00",
+        "is_calc": true,
+        "diff": 6.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10876483,
+        "id_cnt": 58946,
+        "val_pr": 475.0000000000,
+        "val_lst": 480.0000000000,
+        "dat_b": "2025-10-01T00:00:00",
+        "is_calc": true,
+        "diff": 5.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10795825,
+        "id_cnt": 58946,
+        "val_pr": 469.0000000000,
+        "val_lst": 475.0000000000,
+        "dat_b": "2025-09-01T00:00:00",
+        "is_calc": true,
+        "diff": 6.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10719129,
+        "id_cnt": 58946,
+        "val_pr": 465.0000000000,
+        "val_lst": 469.0000000000,
+        "dat_b": "2025-08-01T00:00:00",
+        "is_calc": true,
+        "diff": 4.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10627904,
+        "id_cnt": 58946,
+        "val_pr": 463.0000000000,
+        "val_lst": 465.0000000000,
+        "dat_b": "2025-07-01T00:00:00",
+        "is_calc": true,
+        "diff": 2.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10569647,
+        "id_cnt": 58946,
+        "val_pr": 459.0000000000,
+        "val_lst": 463.0000000000,
+        "dat_b": "2025-06-01T00:00:00",
+        "is_calc": true,
+        "diff": 4.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10474729,
+        "id_cnt": 58946,
+        "val_pr": 454.0000000000,
+        "val_lst": 459.0000000000,
+        "dat_b": "2025-05-01T00:00:00",
+        "is_calc": true,
+        "diff": 5.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10366449,
+        "id_cnt": 58946,
+        "val_pr": 450.0000000000,
+        "val_lst": 454.0000000000,
+        "dat_b": "2025-04-01T00:00:00",
+        "is_calc": true,
+        "diff": 4.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10329733,
+        "id_cnt": 58946,
+        "val_pr": 446.0000000000,
+        "val_lst": 450.0000000000,
+        "dat_b": "2025-03-01T00:00:00",
+        "is_calc": true,
+        "diff": 4.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10254052,
+        "id_cnt": 58946,
+        "val_pr": 441.0000000000,
+        "val_lst": 446.0000000000,
+        "dat_b": "2025-02-01T00:00:00",
+        "is_calc": true,
+        "diff": 5.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    },
+    {
+        "id": 10164585,
+        "id_cnt": 58946,
+        "val_pr": 437.0000000000,
+        "val_lst": 441.0000000000,
+        "dat_b": "2025-01-01T00:00:00",
+        "is_calc": true,
+        "diff": 4.0000000000,
+        "type_ctr": "Общий     ",
+        "description": "Интернет"
+    }
+]

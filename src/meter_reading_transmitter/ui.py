@@ -102,6 +102,12 @@ class MeterReadingTransmitter(toga.App):
         self.header_box.add(label_header)
 
         self.body_box.clear()
+        campaigns_box = Box(
+            style=Pack(
+                flex=1,
+                direction=COLUMN,
+            )
+        )
         profile_btn_id = widget.id
         profile_name_for_sending = profile_btn_id[: profile_btn_id.rfind("_profile")]
         profiles = Settings.load_settings()
@@ -112,7 +118,7 @@ class MeterReadingTransmitter(toga.App):
             campaign_box = Box(
                 style=Pack(
                     flex=0,
-                    direction=ROW,
+                    direction=COLUMN,
                 )
             )
         
@@ -128,7 +134,38 @@ class MeterReadingTransmitter(toga.App):
 
             campaign_lbl_box.add(campaign_lbl)
             self.current_campaign = self.campaign_registry.get(campaign.key)
-            self.current_campaign.get_abonent_data(campaign)
+            abonent_data = self.current_campaign.get_abonent_data(campaign)
+            campaign_box.add(campaign_lbl)
+            campaigns_box.add(campaign_box)
+
+        self.body_box.add(campaigns_box)
+
+        self.footer_box.clear()
+        sending_btn_box = Box(
+            style=Pack(
+                flex=0,
+                direction=ROW,
+            )
+        )
+
+        return_btn = Button(
+            style=Pack(
+                flex=1
+            ),
+            text='Назад',
+            on_press=self.show_profiles_view
+        )
+
+        sending_btn = Button(
+            style=Pack(
+                flex=1
+            ),
+            text='Передать показания',
+            on_press=...
+        )
+
+        sending_btn_box.add(return_btn, sending_btn)
+        self.footer_box.add(sending_btn_box)
             
     def show_create_profile_view(self, widget):
         if widget is not None and widget.id == "create_profile_btn":
