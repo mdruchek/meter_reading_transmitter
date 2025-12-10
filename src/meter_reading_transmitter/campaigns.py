@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+
+from requests.sessions import should_bypass_proxies
 from pydantic import ValidationError
 import requests
 
-from .models import CampaignModel
+from .models import CampaignModel, SubscriberDataModel
 
 
 class CampaignInterface(ABC):
@@ -112,9 +114,16 @@ class KVCCampaign(CampaignInterface):
         print(ctr_days)
         ctr_list = KVCCampaign.get_ctr_list(_location_for_region=location_for_region, _personal_account=personal_account, _counter_id=58946)
         print(ctr_list)
-        return {
-            'message': message_for_abonent
-        }
+        city = abonent_info['tn_name']
+        street = abonent_info['st_name']
+        house_and_apartment_number = abonent_info['dom_kv']
+        subscriber_address = f'{city} {street} {house_and_apartment_number}'
+        personal_account = abonent_info['lc']
+
+        return SubscriberDataModel(
+            address=subscriber_address,
+            personal_account=personal_account
+        )
 
     @staticmethod
     def make_campaign_profile(

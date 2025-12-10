@@ -11,7 +11,7 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 from toga.validators import ContainsDigit, NotContains
 
-from .models import ProfileModel, CampaignModel
+from .models import ProfileModel, CampaignModel, SubscriberDataModel
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface, KVCCampaign
 from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
 from .settings_storage import Settings
@@ -134,8 +134,14 @@ class MeterReadingTransmitter(toga.App):
 
             campaign_lbl_box.add(campaign_lbl)
             self.current_campaign = self.campaign_registry.get(campaign.key)
-            abonent_data = self.current_campaign.get_abonent_data(campaign)
-            campaign_box.add(campaign_lbl)
+
+            subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
+            subscriber_data_model = self.current_campaign.get_abonent_data(campaign)
+            subscriber_data = f'Адресс: {subscriber_data_model.address} Лицевой счет: {subscriber_data_model.personal_account}'
+            subscriber_data_lbl = Label(text=subscriber_data)
+            subscriber_data_box.add(subscriber_data_lbl)
+
+            campaign_box.add(campaign_lbl_box, subscriber_data_box)
             campaigns_box.add(campaign_box)
 
         self.body_box.add(campaigns_box)

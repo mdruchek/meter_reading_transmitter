@@ -16,6 +16,11 @@ class CampaignModel(BaseModel):
     )
 
 
+class SubscriberDataModel(BaseModel):
+    address: str
+    personal_account: str
+
+
 class ProfileModel(BaseModel):
     profile_name: str
     campaigns: list[CampaignModel] = []
