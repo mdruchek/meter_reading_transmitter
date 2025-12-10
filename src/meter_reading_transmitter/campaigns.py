@@ -60,6 +60,12 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
+    def get_abonent_data(_region_id, _personal_account):
+        locations_for_region = KVCCampaign.get_locations_for_region(_region_id)
+        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, _personal_account)
+        message_for_abonent = KVCCampaign.get_message_for_abonent(locations_for_region, abonent_info['id'])
+
+    @staticmethod
     def make_campaign_profile(
         _region_id: int,
         _region_name: str,
