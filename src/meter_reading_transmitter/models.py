@@ -17,8 +17,16 @@ class CampaignModel(BaseModel):
 
 
 class SubscriberDataModel(BaseModel):
+    subscreber_id: int
     address: str
     personal_account: str
+    counters: list[CounterDataModel]
+
+
+class CounterDataModel(BaseModel):
+    counter_id: int
+    counter_number: str 
+    value_last: str
 
 
 class ProfileModel(BaseModel):

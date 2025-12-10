@@ -4,7 +4,7 @@ from requests.sessions import should_bypass_proxies
 from pydantic import ValidationError
 import requests
 
-from .models import CampaignModel, SubscriberDataModel
+from .models import CampaignModel, SubscriberDataModel, CounterDataModel
 
 
 class CampaignInterface(ABC):
@@ -120,9 +120,26 @@ class KVCCampaign(CampaignInterface):
         subscriber_address = f'{city} {street} {house_and_apartment_number}'
         personal_account = abonent_info['lc']
 
+        counters = []
+
+        for counter in cnt_list:
+            counter_id = cnt_list['id_cnt']
+            counter_number = cnt_list['number']
+            value_last = cnt_list['c_val_lst']
+            
+            counter_model = CounterDataModel(
+                counter_id=counter_id,
+                counter_number=counter_number,
+                value_last=value_last
+            )
+
+            counters.append(counter_model)
+
+
         return SubscriberDataModel(
             address=subscriber_address,
-            personal_account=personal_account
+            personal_account=personal_account,
+            counters=counters
         )
 
     @staticmethod
