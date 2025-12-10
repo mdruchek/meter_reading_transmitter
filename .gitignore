@@ -62,3 +62,6 @@ var/
 logs/
 
 src/meter_reading_transmitter/settings.json
+
+*.swo
+*.swp
