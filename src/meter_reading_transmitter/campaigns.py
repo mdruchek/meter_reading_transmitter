@@ -11,10 +11,17 @@ class CampaignInterface(ABC):
 
     @staticmethod
     @abstractmethod
+    def get_abonent_data(
+        _campaign_model: CampaignModel
+    )
+        ...
+
+    @staticmethod
+    @abstractmethod
     def make_campaign(
-        key: str,
-        title: str,
-        region_required: bool
+        _key: str,
+        _title: str,
+        _region_required: bool
     ) -> CampaignModel:
         ...
 
@@ -50,20 +57,23 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
-    def get_message_for_abonent(location_for_region: list[dict[str, str | int]], id_abonent: int):
+    def get_message_for_abonent(_location_for_region: list[dict[str, str | int]], _abonent_id: int):
         url = 'https://send.kvc-nn.ru/api/ControlIndications/GetMessageForAbonent'
         request_data = {
-            "servDb": location_for_region[0],
-            "idA": id_abonent
+            "servDb": _location_for_region,
+            "idA": _abonent_id
         }
         response = requests.post(url, json=request_data)
         return response.json()
 
     @staticmethod
-    def get_abonent_data(_region_id, _personal_account):
-        locations_for_region = KVCCampaign.get_locations_for_region(_region_id)
-        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, _personal_account)
-        message_for_abonent = KVCCampaign.get_message_for_abonent(locations_for_region, abonent_info['id'])
+    def get_abonent_data(_campaign_model: CampaignModel):
+        region_id = _campaign_model.region_id
+        personal_account = _campaign_model.personal_account
+        locations_for_region = KVCCampaign.get_locations_for_region(_region_id=region_id)
+        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, _personal_account=personal_account)
+        abonent_id = abonent_info['id']
+        message_for_abonent = KVCCampaign.get_message_for_abonent(locations_for_region, _abonent_id=abonent_id)
 
     @staticmethod
     def make_campaign_profile(

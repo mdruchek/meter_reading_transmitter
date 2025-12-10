@@ -97,22 +97,39 @@ class MeterReadingTransmitter(toga.App):
         self.footer_box.add(create_profile_btn_box)
 
     def show_form_sending_data(self, widget):
+        self.header_box.clear()
+        label_header = Label(text='Передача показаний')
+        self.header_box.add(label_header)
+
+        self.body_box.clear()
         profile_btn_id = widget.id
         profile_name_for_sending = profile_btn_id[: profile_btn_id.rfind("_profile")]
         profiles = Settings.load_settings()
-        profile = next((p for p in profiles if p.profile_name == 'юб 16'), None)
-        campaigns_profile = profile.campaigns
-        # for campaign_profile in campaigns_profile:
-        #     print(campaigns_profile)
-        #пока одна КВЦ
-        campaign_profile = campaigns_profile[0]
-        locations_for_region = KVCCampaign.get_locations_for_region(campaign_profile.region_id)
-        print(locations_for_region)
-        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, campaign_profile.personal_account)
-        print(abonent_info)
-        message_for_abonent = KVCCampaign.get_message_for_abonent(locations_for_region, abonent_info['id'])
-        print(message_for_abonent)
+        profile = next((p for p in profiles if p.profile_name == profile_name_for_sending), None)
+        campaigns = profile.campaigns
+        
+        for campaign in campaigns:
+            campaign_box = Box(
+                style=Pack(
+                    flex=0,
+                    direction=ROW,
+                )
+            )
+        
+            campaign_lbl_box = Box(
+                style=Pack(
+                    direction=ROW
+                )
+            )
 
+            campaign_lbl = Label(
+                text = campaign.title
+            )
+
+            campaign_lbl_box.add(campaign_lbl)
+            self.current_campaign = self.campaign_registry.get(campaign.key)
+            self.current_campaign.get_abonent_data(campaign)
+            
     def show_create_profile_view(self, widget):
         if widget is not None and widget.id == "create_profile_btn":
             self.settings_campaigns_for_add.clear()
