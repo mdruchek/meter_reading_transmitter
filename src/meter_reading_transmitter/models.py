@@ -27,6 +27,7 @@ class CounterDataModel(BaseModel):
     counter_id: int
     counter_number: str 
     value_last: str
+    checking_data: str
 
 
 class ProfileModel(BaseModel):

@@ -141,7 +141,51 @@ class MeterReadingTransmitter(toga.App):
             subscriber_data_lbl = Label(text=subscriber_data)
             subscriber_data_box.add(subscriber_data_lbl)
 
-            campaign_box.add(campaign_lbl_box, subscriber_data_box)
+            counters_data_box = Box(
+                style=Pack(
+                    direction=COLUMN,
+                    flex=1,
+                )
+            )
+
+            for counter in subscriber_data_model.counters
+                counter_number = counter.counter_number
+                counter_value_last = counter.value_last
+                counter_checking_date = counter.checking_data
+
+                counter_data_box = Box(
+                    style=Pack(
+                        direction=ROW,
+                        flex=1,
+                    )
+                )
+                
+                sending_counter_data_box(
+                    style=Pack(
+                        direction=ROW,
+                        flex=1,
+                    )
+                )
+
+                sending_data_lbl = Label(
+                    text='Показания:'
+                )
+
+                sending_data_txtinp = TextInput(
+                    style=Pack(
+                        flex=1
+                    )
+                )
+                
+                counter_number_lbl = Label(text=f'Номер счетчика: {counter_number}')
+                counter_value_last_lbl = Label(text=f'Последние показания: {counter_value_last}')
+                counter_checking_date_lbl = Label(text=f'Дата поверки: {counter_checking_date}')
+
+                sending_counter_data_box.add(sending_data_lbl, sending_data_txtinp)
+                counter_data_box.add(sending_counter_data_box, counter_number_lbl, counter_value_last_lbl, counter_checking_date_lbl)
+                counters_data_box.add(counter_data_box)
+            
+            campaign_box.add(campaign_lbl_box, subscriber_data_box, counters_data_box)
             campaigns_box.add(campaign_box)
 
         self.body_box.add(campaigns_box)
