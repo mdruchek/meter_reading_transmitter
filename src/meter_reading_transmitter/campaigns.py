@@ -118,25 +118,29 @@ class KVCCampaign(CampaignInterface):
         street = abonent_info['st_name']
         house_and_apartment_number = abonent_info['dom_kv']
         subscriber_address = f'{city} {street} {house_and_apartment_number}'
-        personal_account = abonent_info['lc']
+        personal_account = abonent_info['lc'].strip()
+        subscriber_id = abonent_info['id']
 
         counters = []
 
         for counter in cnt_list:
-            counter_id = cnt_list['id_cnt']
-            counter_number = cnt_list['number']
-            value_last = cnt_list['c_val_lst']
+            counter_id = counter['id_cnt']
+            counter_number: str = counter['number'].strip()
+            value_last = counter['c_val_lst']
+            checking_data = counter['dat_sn']
             
             counter_model = CounterDataModel(
-                counter_id=counter_id,
-                counter_number=counter_number,
-                value_last=value_last
+                id=counter_id,
+                number=counter_number,
+                value_last=value_last,
+                checking_data=checking_data,
             )
 
             counters.append(counter_model)
 
 
         return SubscriberDataModel(
+            id=subscriber_id,
             address=subscriber_address,
             personal_account=personal_account,
             counters=counters

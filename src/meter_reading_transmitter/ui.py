@@ -148,8 +148,8 @@ class MeterReadingTransmitter(toga.App):
                 )
             )
 
-            for counter in subscriber_data_model.counters
-                counter_number = counter.counter_number
+            for counter in subscriber_data_model.counters:
+                counter_number = counter.number
                 counter_value_last = counter.value_last
                 counter_checking_date = counter.checking_data
 
@@ -160,7 +160,7 @@ class MeterReadingTransmitter(toga.App):
                     )
                 )
                 
-                sending_counter_data_box(
+                sending_counter_data_box = Box(
                     style=Pack(
                         direction=ROW,
                         flex=1,
