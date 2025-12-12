@@ -492,7 +492,7 @@ class MeterReadingTransmitter(toga.App):
                 personal_account_txt_input.style.background_color = PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
                 return
 
-            self.settings_campaigns_for_add.append(campaign_obj_or_err.model_dump())
+            self.settings_campaigns_for_add.append(campaign_obj_or_err)
 
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
 
