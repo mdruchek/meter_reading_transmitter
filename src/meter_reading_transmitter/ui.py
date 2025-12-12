@@ -41,6 +41,78 @@ class MeterReadingTransmitter(toga.App):
         self.show_profiles_view(widget=None)
         self.main_window.show()
 
+    def show_profile_edit(widget)
+        profile_btn_id: Unknown = widget.id
+        profile_name_for_edit: = profile_btn_id[: profile_btn_id.rfind("_profile")]
+
+        profiles = Settings.load_settings()
+        
+        if profiles:
+            profile: ProfileModel = next(profile for profile in profiles if profile.profile_name == profile_name_for_edit)
+
+        self.header_box.clear()
+        header_lbl = Lapel(text=f'Редактированме профиля {profile.profile_name}')
+        self.header.add(header_lbl)
+
+        self.body_box.clear()
+        profile_box = Box(
+            style=Pack(
+                direction=COLUMN,
+                flex=1,
+            )
+        )
+
+        profile_name_box = Box(
+            style=Pack(
+                direction=ROW,
+                flex=0
+            )
+        )
+
+        profile_name_lbl = Label(text='Имя прошиля:')
+        
+        profil_name_txtinp = TextInput(
+            style=Pack(
+                flex=1
+            ),
+            value=profile.profile_name
+        )
+
+        profile_name_box.add(profile_name_lbl, profile_name_txtinp)
+
+        profile_box.add(profile_name_box)
+        selbody_box.add(profile_box)
+
+        self.footer_box.clear()
+        
+        save_btn_dox = Box(
+            style=Pack(
+                direction=ROW,
+                flex=0
+            )
+        )
+
+        return_btn = Button(
+            style=Pack(
+                flex=1
+            ),
+            text='Назад',
+            on_press=self.show_profiles_view
+        )
+
+        def saved_profile(widget):
+            profile_index = profiles.index(profile)
+            profiles.pop(profile_index)
+            profile = Profile()
+
+        save_btn = Button(
+            style=Pack(
+                flex=1
+            ),
+            text='Сохранить',
+            on_press=saved_profile
+        )
+
     def show_profiles_view(self, widget):
         self.header_box.clear()
         header_label = Label(text="Профили", style=Pack(flex=1))
@@ -65,6 +137,7 @@ class MeterReadingTransmitter(toga.App):
                 profile_edit_btn = Button(
                     id=f'{profile.profile_name}_profile_edit',
                     text="Редактировать",
+                    on_press='show_profile_edit',
                 )
 
                 def profile_del(widget):
