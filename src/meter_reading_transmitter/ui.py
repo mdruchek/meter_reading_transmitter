@@ -41,18 +41,18 @@ class MeterReadingTransmitter(toga.App):
         self.show_profiles_view(widget=None)
         self.main_window.show()
 
-    def show_profile_edit(widget)
-        profile_btn_id: Unknown = widget.id
-        profile_name_for_edit: = profile_btn_id[: profile_btn_id.rfind("_profile")]
+    def show_profile_edit(self, widget):
+        profile_btn_id = widget.id
+        profile_name_for_edit = profile_btn_id[: profile_btn_id.rfind("_profile")]
+
+        self.header_box.clear()
+        header_lbl = Label(text=f'Редактированме профиля {profile_name_for_edit}')
+        self.header_box.add(header_lbl)
 
         profiles = Settings.load_settings()
         
         if profiles:
             profile: ProfileModel = next(profile for profile in profiles if profile.profile_name == profile_name_for_edit)
-
-        self.header_box.clear()
-        header_lbl = Lapel(text=f'Редактированме профиля {profile.profile_name}')
-        self.header.add(header_lbl)
 
         self.body_box.clear()
         profile_box = Box(
@@ -71,7 +71,7 @@ class MeterReadingTransmitter(toga.App):
 
         profile_name_lbl = Label(text='Имя прошиля:')
         
-        profil_name_txtinp = TextInput(
+        profile_name_txtinp = TextInput(
             style=Pack(
                 flex=1
             ),
@@ -80,8 +80,38 @@ class MeterReadingTransmitter(toga.App):
 
         profile_name_box.add(profile_name_lbl, profile_name_txtinp)
 
-        profile_box.add(profile_name_box)
-        selbody_box.add(profile_box)
+        profile_campaigns = profile.campaigns
+        campaigns_box = Box(
+            style=Pack(
+                direction=COLUMN,
+                flex=1,
+            )
+        )
+
+        for campaign in profile_campaigns:
+            campaign_box = Box(
+                style=Pack(
+                    direction=ROW,
+                    flex=1
+                )
+            )
+
+            def remove_campaign_from_profile(wigget):
+                ...
+
+            campaign_name = campaign.title
+            personal_account = campaign.personal_account
+            campaign_lbl = Label(text=f'Кампания {campaign_name}. Лицевой счет {personal_account}')
+            campaign_delete_btn = Button(
+                text='Удалить',
+                on_press=remove_campaign_from_profile
+            )
+
+            campaign_box.add(campaign_lbl, campaign_delete_btn)
+            campaigns_box.add(campaign_box)
+
+        profile_box.add(profile_name_box, campaigns_box)
+        self.body_box.add(profile_box)
 
         self.footer_box.clear()
         
@@ -103,7 +133,9 @@ class MeterReadingTransmitter(toga.App):
         def saved_profile(widget):
             profile_index = profiles.index(profile)
             profiles.pop(profile_index)
-            profile = Profile()
+            profile_edited = ProfileModel(
+                profile_name=profile_name_txtinp.value
+            )
 
         save_btn = Button(
             style=Pack(
@@ -112,6 +144,9 @@ class MeterReadingTransmitter(toga.App):
             text='Сохранить',
             on_press=saved_profile
         )
+
+        save_btn_dox.add(return_btn, save_btn)
+        self.footer_box.add(save_btn_dox)
 
     def show_profiles_view(self, widget):
         self.header_box.clear()
@@ -137,7 +172,7 @@ class MeterReadingTransmitter(toga.App):
                 profile_edit_btn = Button(
                     id=f'{profile.profile_name}_profile_edit',
                     text="Редактировать",
-                    on_press='show_profile_edit',
+                    on_press=self.show_profile_edit,
                 )
 
                 def profile_del(widget):
