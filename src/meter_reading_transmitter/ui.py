@@ -125,7 +125,7 @@ class MeterReadingTransmitter(toga.App):
 
             def remove_campaign_from_profile(wigget, _campaign_index):
                 profile_campaigns.pop(_campaign_index)
-                # self.show_profile_edit(widget)
+                campaign_box.insert(0, Label(style=Pack(color='#8B0000'), text='Удалён'))
 
             campaign_name = campaign.title
             personal_account = campaign.personal_account
