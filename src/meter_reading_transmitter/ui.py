@@ -1,6 +1,33 @@
 """
 An application for transmitting meter readings
 """
+# -*- coding: utf-8 -*-
+# ✅ УНИВЕРСАЛЬНЫЙ ФИКС Toga 0.5.3 CSS (dict ↔ str)
+try:
+    import toga_gtk.widgets.base as base
+
+
+    def fixed_get_font_css(font):
+        css = base.get_font_css(font)
+        if isinstance(css, dict):
+            return css  # apply_css ожидает dict
+        elif isinstance(css, str) and css and not css.startswith(('*', '.', '#')):
+            return {'font': css.lstrip(':')}  # str → dict
+        return css
+
+
+    def fixed_apply_css(self, name, css):
+        if isinstance(css, str):
+            css = {'font': css}  # str → dict
+        self._style_provider.load_from_data(f"* {{ {' '.join(f'{k}: {v};' for k, v in css.items())} }}".encode())
+
+
+    base.WidgetImpl.get_font_css = fixed_get_font_css
+    base.WidgetImpl.apply_css = fixed_apply_css
+    print("✅ Toga CSS full fix applied")
+except Exception as e:
+    print(f"CSS fix skipped: {e}")
+
 
 import os
 from pydantic import ValidationError
