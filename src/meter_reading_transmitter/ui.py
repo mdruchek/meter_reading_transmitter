@@ -98,6 +98,7 @@ class MeterReadingTransmitter(toga.App):
 
             def remove_campaign_from_profile(wigget, _campaign_index):
                 profile_campaigns.pop(_campaign_index)
+                # self.show_profile_edit(widget)
 
             campaign_name = campaign.title
             personal_account = campaign.personal_account
@@ -105,7 +106,7 @@ class MeterReadingTransmitter(toga.App):
 
             campaign_delete_btn = Button(
                 text='Удалить',
-                on_press=lambda widget, campaign_index:  remove_campaign_from_profile(widget, _campaign_index=campaign_index)
+                on_press=lambda widget, _campaign_index=campaign_index:  remove_campaign_from_profile(widget, _campaign_index)
             )
 
             campaign_box.add(campaign_lbl, campaign_delete_btn)
@@ -127,7 +128,7 @@ class MeterReadingTransmitter(toga.App):
             style=Pack(
                 flex=1
             ),
-            text='Назад',
+            text='отмена',
             on_press=self.show_profiles_view
         )
 
@@ -141,8 +142,9 @@ class MeterReadingTransmitter(toga.App):
             )
 
             profiles.insert(profile_index, profile_edited)
-
             Settings.save_settings(profiles)
+            self.show_profiles_view(widget)
+
 
         save_btn = Button(
             style=Pack(
