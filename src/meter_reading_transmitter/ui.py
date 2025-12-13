@@ -88,7 +88,7 @@ class MeterReadingTransmitter(toga.App):
             )
         )
 
-        for campaign in profile_campaigns:
+        for campaign_index, campaign in enumerate(profile_campaigns):
             campaign_box = Box(
                 style=Pack(
                     direction=ROW,
@@ -96,15 +96,16 @@ class MeterReadingTransmitter(toga.App):
                 )
             )
 
-            def remove_campaign_from_profile(wigget):
-                ...
+            def remove_campaign_from_profile(wigget, _campaign_index):
+                profile_campaigns.pop(_campaign_index)
 
             campaign_name = campaign.title
             personal_account = campaign.personal_account
             campaign_lbl = Label(text=f'Кампания {campaign_name}. Лицевой счет {personal_account}')
+
             campaign_delete_btn = Button(
                 text='Удалить',
-                on_press=remove_campaign_from_profile
+                on_press=lambda widget, campaign_index:  remove_campaign_from_profile(widget, _campaign_index=campaign_index)
             )
 
             campaign_box.add(campaign_lbl, campaign_delete_btn)
@@ -133,9 +134,15 @@ class MeterReadingTransmitter(toga.App):
         def saved_profile(widget):
             profile_index = profiles.index(profile)
             profiles.pop(profile_index)
+
             profile_edited = ProfileModel(
-                profile_name=profile_name_txtinp.value
+                profile_name=profile_name_txtinp.value,
+                campaigns=profile_campaigns
             )
+
+            profiles.insert(profile_index, profile_edited)
+
+            Settings.save_settings(profiles)
 
         save_btn = Button(
             style=Pack(
