@@ -10,6 +10,20 @@ from .models import CampaignModel, SubscriberDataModel, CounterDataModel
 class CampaignInterface(ABC):
     key: str
     title: str
+    request_data: dict[str,dict[str,str]]
+
+   
+    @staticmethod
+    @adstractmethod
+    def api_request(method: str, url: str, *, timeout: float = 10, **kwargs):
+        try:
+            response = requests.request(method, url, timeout=timeout, **kwargs)
+            response.raise_for_status()
+            return response.json()
+        except (requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError):
+            return None
 
     @staticmethod
     @abstractmethod
@@ -32,6 +46,14 @@ class KVCCampaign(CampaignInterface):
     key = "kvc"
     title = "КВЦ"
     region_required = True
+    request_data = {
+        'active_regions': {
+            'method': 'POST',
+            'url': 'https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions',
+        },
+        'location_for_region': 
+    }
+
 
     @staticmethod
     def get_active_regions() -> list[dict]:
