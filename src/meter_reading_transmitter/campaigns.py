@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import json
 
 from requests.sessions import should_bypass_proxies
 from pydantic import ValidationError
@@ -10,11 +11,9 @@ from .models import CampaignModel, SubscriberDataModel, CounterDataModel
 class CampaignInterface(ABC):
     key: str
     title: str
-    request_data: dict[str,dict[str,str]]
-
    
     @staticmethod
-    @adstractmethod
+    @abstractmethod
     def api_request(method: str, url: str, *, timeout: float = 10, **kwargs):
         try:
             response = requests.request(method, url, timeout=timeout, **kwargs)
@@ -27,7 +26,7 @@ class CampaignInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_abonent_data(
+    def get_subscriber_data(
         _campaign_model: CampaignModel
     ):
         ...
@@ -46,14 +45,6 @@ class KVCCampaign(CampaignInterface):
     key = "kvc"
     title = "КВЦ"
     region_required = True
-    request_data = {
-        'active_regions': {
-            'method': 'POST',
-            'url': 'https://send.kvc-nn.ru/api/ControlIndications/GetActiveCtrRegions',
-        },
-        'location_for_region': 
-    }
-
 
     @staticmethod
     def get_active_regions() -> list[dict]:
@@ -110,7 +101,7 @@ class KVCCampaign(CampaignInterface):
         response = requests.post(url, json=request_data)
         return response.json()
 
-    @staticmethod
+    @staticm    ethod
     def get_ctr_list(_location_for_region: list[dict[str, str | int]], _personal_account: str, _counter_id: int):
         url = 'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList'
         request_data = {
@@ -122,30 +113,88 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
-    def get_abonent_data(_campaign_model: CampaignModel):
+    def api_request(method: str, url: str, *, timeout: float = 10, **kwargs):
+        try:
+            response = requests.request(method, url, timeout=timeout, **kwargs)
+            response.raise_for_status()
+            return response.json()
+        except (requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError):
+            return None
+
+    @staticmethod
+    def get_subscribe_data(_campaign_model: CampaignModel):
         region_id = _campaign_model.region_id
         personal_account = _campaign_model.personal_account
-        locations_for_region = KVCCampaign.get_locations_for_region(_region_id=region_id)
-        abonent_info = KVCCampaign.get_abonent_info(locations_for_region, _personal_account=personal_account)
-        abonent_id = abonent_info['id']
+
+        locations_for_region = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetLocationsForRegion',
+            params={"idRegion": region_id}
+        )
+
+        subscriber_info = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo',
+            json={
+                "servDbs": location_for_region,
+                "lc": personal_account,
+                "target": 0
+            }
+        )
+
+        subscriber_id = subscriber_info['id']
+
         location_for_region = next((loc for loc in locations_for_region if loc['db_name'] == 'co_vyksa'), None)
-        message_for_abonent = KVCCampaign.get_message_for_abonent(_location_for_region=location_for_region, _abonent_id=abonent_id)
-        cnt_list = KVCCampaign.get_cnt_list(_location_for_region=location_for_region, _personal_account=personal_account)
-        print(cnt_list)
-        ctr_days = KVCCampaign.get_ctr_days(_location_for_region=location_for_region, _personal_account=personal_account)
-        print(ctr_days)
-        ctr_list = KVCCampaign.get_ctr_list(_location_for_region=location_for_region, _personal_account=personal_account, _counter_id=58946)
-        print(ctr_list)
-        city = abonent_info['tn_name']
-        street = abonent_info['st_name']
-        house_and_apartment_number = abonent_info['dom_kv']
+
+        message_for_subscriber = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetMessageForAbonent',
+            json = {
+                "servDb": _location_for_region,
+                "idA": _abonent_id
+            }
+        )
+
+        counters_list = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetCntList',
+            json = {
+                "servDb": location_for_region,
+                "lc": _personal_account
+            }
+        )
+
+        tranzit_days = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrDays'
+            json = {
+                "servDb": location_for_region,
+                "lc": personal_account
+            }
+        )
+
+        counter_list = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList'
+            json = {
+                "servDb": location_for_region,
+                "lc": personal_account,
+                "idCnt": counter_id
+            }
+        )
+
+        city = subscriber_info['tn_name']
+        street = subscriber_info['st_name']
+        house_and_apartment_number = subscriber_info['dom_kv']
         subscriber_address = f'{city} {street} {house_and_apartment_number}'
         personal_account = abonent_info['lc'].strip()
         subscriber_id = abonent_info['id']
 
         counters = []
 
-        for counter in cnt_list:
+        for counter in counters_list:
             counter_id = counter['id_cnt']
             counter_number: str = counter['number'].strip()
             value_last = counter['c_val_lst']
