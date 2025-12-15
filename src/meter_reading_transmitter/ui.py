@@ -32,8 +32,9 @@ except Exception as e:
 import os
 from pydantic import ValidationError
 
+import requests
 import toga
-from toga import Box, Button, Label, TextInput, Selection
+from toga import Box, Button, Label, TextInput, Selection, ErrorDialog
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 from toga.validators import ContainsDigit, NotContains
@@ -240,7 +241,7 @@ class MeterReadingTransmitter(toga.App):
         create_profile_btn_box.add(create_profile_btn)
         self.footer_box.add(create_profile_btn_box)
 
-    def show_form_sending_data(self, widget):
+    async def show_form_sending_data(self, widget):
         self.header_box.clear()
         label_header = Label(text='Передача показаний')
         self.header_box.add(label_header)
@@ -280,7 +281,25 @@ class MeterReadingTransmitter(toga.App):
             self.current_campaign = self.campaign_registry.get(campaign.key)
 
             subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
-            subscriber_data_model = self.current_campaign.get_subscriber_data(campaign)
+
+            try:
+                subscriber_data_model = self.current_campaign.get_subscriber_data(campaign)
+            except requests.exceptions.Timeout:
+                error = ErrorDialog(title='Сервер не отвечает', message='Сервер долго не отвечает. Попробуйте ещё раз позже.')
+                await self.app.main_window.dialog(error)
+                self.show_profiles_view(widget)
+                return
+            except requests.exceptions.ConnectionError:
+                error = ErrorDialog(title='Ошибка сети', message='Не удалось подключиться к серверу. Проверьте подключение к интернету.')
+                await self.app.main_window.dialog(error)
+                self.show_profiles_view(widget)
+                return
+            except requests.exceptions.HTTPError:
+                error = ErrorDialog(title='Ошибка сервера', message='Ошибка на стороне сервера. Повторите попытку позже.')
+                await self.app.main_window.dialog(error)
+                self.show_profiles_view(widget)
+                return
+
             subscriber_address = f'Адресс: {subscriber_data_model.address} Лицевой счет: {subscriber_data_model.personal_account}'
             subscriber_data_lbl = Label(text=subscriber_address)
             subscriber_data_box.add(subscriber_data_lbl)

@@ -33,7 +33,7 @@ class CampaignInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def make_campaign(
+    def make_campaign_profile(
         _key: str,
         _title: str,
         _region_required: bool
@@ -113,16 +113,11 @@ class KVCCampaign(CampaignInterface):
         return response.json()
 
     @staticmethod
-    def api_request(method: str, url: str, *, timeout: float = 10, **kwargs):
-        try:
-            response = requests.request(method, url, timeout=timeout, **kwargs)
-            response.raise_for_status()
-            return response.json()
-        except (requests.exceptions.Timeout,
-                requests.exceptions.ConnectionError,
-                requests.exceptions.HTTPError) as e:
-            print(type(e))
-            return None
+    def  api_request(method: str, url: str, *, timeout: float = 3, **kwargs):
+        response = requests.request(method, url, timeout=timeout, **kwargs)
+        response.raise_for_status()
+        return response.json()
+
 
     @staticmethod
     def get_subscriber_data(_campaign_model: CampaignModel):
