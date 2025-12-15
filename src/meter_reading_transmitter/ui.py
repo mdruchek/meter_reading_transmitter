@@ -29,7 +29,8 @@ except Exception as e:
     print(f"CSS fix skipped: {e}")
 
 
-import os
+import asyncio
+
 from pydantic import ValidationError
 
 import requests
@@ -258,97 +259,83 @@ class MeterReadingTransmitter(toga.App):
         profiles = Settings.load_settings()
         profile = next((p for p in profiles if p.profile_name == profile_name_for_sending), None)
         campaigns = profile.campaigns
-        
+
+        async def fetch_subscriber_data(campaign, current_campaign):
+            loop = asyncio.get_running_loop()
+            try:
+                # если get_subscriber_data блокирующий, уводим в executor
+                subscriber_data_model = await loop.run_in_executor(
+                    None,
+                    current_campaign.get_subscriber_data,
+                    campaign,
+                )
+                return subscriber_data_model
+            except requests.exceptions.Timeout as e:
+                return e
+            except requests.exceptions.ConnectionError as e:
+                return e
+            except requests.exceptions.HTTPError as e:
+                return e
+
+        tasks = []
         for campaign in campaigns:
-            campaign_box = Box(
-                style=Pack(
-                    flex=0,
-                    direction=COLUMN,
-                )
-            )
-        
-            campaign_lbl_box = Box(
-                style=Pack(
-                    direction=ROW
-                )
-            )
+            current_campaign = self.campaign_registry.get(campaign.key)
+            tasks.append(fetch_subscriber_data(campaign, current_campaign))
 
-            campaign_lbl = Label(
-                text = campaign.title
-            )
+        results = await asyncio.gather(*tasks, return_exceptions=False)
 
+        for campaign, result in zip(campaigns, results):
+            campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
+            campaign_lbl_box = Box(style=Pack(direction=ROW))
+            campaign_lbl = Label(text=campaign.title)
             campaign_lbl_box.add(campaign_lbl)
-            self.current_campaign = self.campaign_registry.get(campaign.key)
 
             subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
 
-            try:
-                subscriber_data_model = self.current_campaign.get_subscriber_data(campaign)
-            except requests.exceptions.Timeout:
-                error = ErrorDialog(title='Сервер не отвечает', message='Сервер долго не отвечает. Попробуйте ещё раз позже.')
-                await self.app.main_window.dialog(error)
-                self.show_profiles_view(widget)
-                return
-            except requests.exceptions.ConnectionError:
-                error = ErrorDialog(title='Ошибка сети', message='Не удалось подключиться к серверу. Проверьте подключение к интернету.')
-                await self.app.main_window.dialog(error)
-                self.show_profiles_view(widget)
-                return
-            except requests.exceptions.HTTPError:
-                error = ErrorDialog(title='Ошибка сервера', message='Ошибка на стороне сервера. Повторите попытку позже.')
-                await self.app.main_window.dialog(error)
-                self.show_profiles_view(widget)
-                return
-
-            subscriber_address = f'Адресс: {subscriber_data_model.address} Лицевой счет: {subscriber_data_model.personal_account}'
-            subscriber_data_lbl = Label(text=subscriber_address)
-            subscriber_data_box.add(subscriber_data_lbl)
-
-            counters_data_box = Box(
-                style=Pack(
-                    direction=COLUMN,
-                    flex=1,
+            if isinstance(result, Exception):
+                # показываем причину ошибки для конкретной кампании
+                if isinstance(result, requests.exceptions.Timeout):
+                    msg = 'Сервер не отвечает. Попробуйте позже.'
+                elif isinstance(result, requests.exceptions.ConnectionError):
+                    msg = 'Ошибка сети. Проверьте подключение.'
+                elif isinstance(result, requests.exceptions.HTTPError):
+                    msg = 'Ошибка на стороне сервера.'
+                else:
+                    msg = f'Неизвестная ошибка: {type(result).__name__}'
+                error_lbl = Label(text=msg)
+                subscriber_data_box.add(error_lbl)
+            else:
+                subscriber_data_model = result
+                subscriber_address = (
+                    f'Адрес: {subscriber_data_model.address} '
+                    f'Лицевой счёт: {subscriber_data_model.personal_account}'
                 )
-            )
 
-            for counter in subscriber_data_model.counters:
-                counter_number = counter.number
-                counter_value_last = counter.value_last
-                counter_checking_date = counter.checking_data
+                subscriber_data_lbl = Label(text=subscriber_address)
+                subscriber_data_box.add(subscriber_data_lbl)
 
-                counter_data_box = Box(
-                    style=Pack(
-                        direction=ROW,
-                        flex=1,
+                counters_data_box = Box(style=Pack(direction=COLUMN, flex=1))
+                for counter in subscriber_data_model.counters:
+                    counter_data_box = Box(style=Pack(direction=ROW, flex=1))
+                    sending_counter_data_box = Box(style=Pack(direction=ROW, flex=1))
+
+                    sending_data_lbl = Label(text='Показания:')
+                    sending_data_txtinp = TextInput(style=Pack(flex=1))
+
+                    counter_number_lbl = Label(text=f'Номер счетчика: {counter.number}')
+                    counter_value_last_lbl = Label(text=f'Последние показания: {counter.value_last}')
+                    counter_checking_date_lbl = Label(text=f'Дата поверки: {counter.checking_data}')
+
+                    sending_counter_data_box.add(sending_data_lbl, sending_data_txtinp)
+                    counter_data_box.add(
+                        sending_counter_data_box,
+                        counter_number_lbl,
+                        counter_value_last_lbl,
+                        counter_checking_date_lbl,
                     )
-                )
-                
-                sending_counter_data_box = Box(
-                    style=Pack(
-                        direction=ROW,
-                        flex=1,
-                    )
-                )
+                    counters_data_box.add(counter_data_box)
 
-                sending_data_lbl = Label(
-                    text='Показания:'
-                )
-
-                sending_data_txtinp = TextInput(
-                    style=Pack(
-                        flex=1
-                    )
-                )
-                
-                counter_number_lbl = Label(text=f'Номер счетчика: {counter_number}')
-                counter_value_last_lbl = Label(text=f'Последние показания: {counter_value_last}')
-                counter_checking_date_lbl = Label(text=f'Дата поверки: {counter_checking_date}')
-
-                sending_counter_data_box.add(sending_data_lbl, sending_data_txtinp)
-                counter_data_box.add(sending_counter_data_box, counter_number_lbl, counter_value_last_lbl, counter_checking_date_lbl)
-                counters_data_box.add(counter_data_box)
-            
-            campaign_box.add(campaign_lbl_box, subscriber_data_box, counters_data_box)
+            campaign_box.add(campaign_lbl_box, subscriber_data_box)
             campaigns_box.add(campaign_box)
 
         self.body_box.add(campaigns_box)
