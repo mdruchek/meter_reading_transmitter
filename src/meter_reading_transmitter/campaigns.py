@@ -101,7 +101,7 @@ class KVCCampaign(CampaignInterface):
         response = requests.post(url, json=request_data)
         return response.json()
 
-    @staticm    ethod
+    @staticmethod
     def get_ctr_list(_location_for_region: list[dict[str, str | int]], _personal_account: str, _counter_id: int):
         url = 'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList'
         request_data = {
@@ -120,11 +120,12 @@ class KVCCampaign(CampaignInterface):
             return response.json()
         except (requests.exceptions.Timeout,
                 requests.exceptions.ConnectionError,
-                requests.exceptions.HTTPError):
+                requests.exceptions.HTTPError) as e:
+            print(type(e))
             return None
 
     @staticmethod
-    def get_subscribe_data(_campaign_model: CampaignModel):
+    def get_subscriber_data(_campaign_model: CampaignModel):
         region_id = _campaign_model.region_id
         personal_account = _campaign_model.personal_account
 
@@ -138,7 +139,7 @@ class KVCCampaign(CampaignInterface):
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo',
             json={
-                "servDbs": location_for_region,
+                "servDbs": locations_for_region,
                 "lc": personal_account,
                 "target": 0
             }
@@ -152,8 +153,8 @@ class KVCCampaign(CampaignInterface):
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetMessageForAbonent',
             json = {
-                "servDb": _location_for_region,
-                "idA": _abonent_id
+                "servDb": location_for_region,
+                "idA": subscriber_id
             }
         )
 
@@ -162,13 +163,13 @@ class KVCCampaign(CampaignInterface):
             'https://send.kvc-nn.ru/api/ControlIndications/GetCntList',
             json = {
                 "servDb": location_for_region,
-                "lc": _personal_account
+                "lc": personal_account
             }
         )
 
         tranzit_days = KVCCampaign.api_request(
             'POST',
-            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrDays'
+            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrDays',
             json = {
                 "servDb": location_for_region,
                 "lc": personal_account
@@ -177,11 +178,11 @@ class KVCCampaign(CampaignInterface):
 
         counter_list = KVCCampaign.api_request(
             'POST',
-            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList'
+            'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList',
             json = {
                 "servDb": location_for_region,
                 "lc": personal_account,
-                "idCnt": counter_id
+                "idCnt": 58946
             }
         )
 
@@ -189,8 +190,8 @@ class KVCCampaign(CampaignInterface):
         street = subscriber_info['st_name']
         house_and_apartment_number = subscriber_info['dom_kv']
         subscriber_address = f'{city} {street} {house_and_apartment_number}'
-        personal_account = abonent_info['lc'].strip()
-        subscriber_id = abonent_info['id']
+        personal_account = subscriber_info['lc'].strip()
+        subscriber_id = subscriber_info['id']
 
         counters = []
 

@@ -16,18 +16,18 @@ class CampaignModel(BaseModel):
     )
 
 
-class SubscriberDataModel(BaseModel):
-    id: int
-    address: str
-    personal_account: str
-    counters: list['CounterDataModel']
-
-
 class CounterDataModel(BaseModel):
     id: int
     number: str
     value_last: str
     checking_data: str
+
+
+class SubscriberDataModel(BaseModel):
+    id: int
+    address: str
+    personal_account: str
+    counters: list[CounterDataModel]
 
 
 class ProfileModel(BaseModel):

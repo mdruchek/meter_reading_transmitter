@@ -280,9 +280,9 @@ class MeterReadingTransmitter(toga.App):
             self.current_campaign = self.campaign_registry.get(campaign.key)
 
             subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
-            subscriber_data_model = self.current_campaign.get_abonent_data(campaign)
-            subscriber_data = f'Адресс: {subscriber_data_model.address} Лицевой счет: {subscriber_data_model.personal_account}'
-            subscriber_data_lbl = Label(text=subscriber_data)
+            subscriber_data_model = self.current_campaign.get_subscriber_data(campaign)
+            subscriber_address = f'Адресс: {subscriber_data_model.address} Лицевой счет: {subscriber_data_model.personal_account}'
+            subscriber_data_lbl = Label(text=subscriber_address)
             subscriber_data_box.add(subscriber_data_lbl)
 
             counters_data_box = Box(
