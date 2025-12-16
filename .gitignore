@@ -67,4 +67,4 @@ src/meter_reading_transmitter/settings.json
 *.swo
 *.swp
 
-!build/meter_reading_transmitter/android/gradle/app/build/outputs/apk/debug/app-debug.apk
+!/build/meter_reading_transmitter/android/gradle/app/build/outputs/apk/debug/app-debug.apk
