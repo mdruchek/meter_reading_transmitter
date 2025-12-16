@@ -335,7 +335,7 @@ class MeterReadingTransmitter(toga.App):
                     )
                     counters_data_box.add(counter_data_box)
 
-            campaign_box.add(campaign_lbl_box, subscriber_data_box)
+            campaign_box.add(campaign_lbl_box, subscriber_data_box, counters_data_box)
             campaigns_box.add(campaign_box)
 
         self.body_box.add(campaigns_box)
