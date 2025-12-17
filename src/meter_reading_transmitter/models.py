@@ -20,6 +20,7 @@ class CampaignModel(BaseModel):
 
 class CounterDataModel(BaseModel):
     id: int
+    id_type: str
     number: str
     value_last: str
     checking_data: str

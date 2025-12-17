@@ -198,12 +198,14 @@ class KVCCampaign(CampaignInterface):
 
         for counter in counters_list:
             counter_id = counter['id_cnt']
+            counter_id_type = counter['id_type']
             counter_number: str = counter['number'].strip()
             value_last = counter['c_val_lst']
             checking_data = counter['dat_sn']
             
             counter_model = CounterDataModel(
                 id=counter_id,
+                id_type=counter_id_type,
                 number=counter_number,
                 value_last=value_last,
                 checking_data=checking_data,
@@ -211,17 +213,17 @@ class KVCCampaign(CampaignInterface):
 
             counters.append(counter_model)
 
-
         return SubscriberKCVCampaignModelDataUpload(
             campaign=_subscriber_campaign.campaign,
             id=subscriber_id,
             address=subscriber_address,
             personal_account=personal_account,
-            counters=counters
+            counters=counters,
+            **_subscriber_campaign.model_dump()
         )
 
     @staticmethod
-    def send_data_counters(counters: list[CounterDataModel]):
+    def send_data_counters(subscriber_campaign: SubscriberKCVCampaignModelDataUpload):
         response = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
