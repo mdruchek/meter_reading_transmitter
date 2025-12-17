@@ -214,6 +214,35 @@ class KVCCampaign(CampaignInterface):
         )
 
     @staticmethod
+    def send_data_counters(counters: list[CounterDataModel]):
+        response = KVCCampaign.api_request(
+            'POST',
+            'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
+            json={
+                "servDb": {
+                  "server": "DBASES03",
+                  "db_name": "co_vyksa",
+                  "login": null,
+                  "id_user": null
+                 },
+                 "ctrForInsert": [
+                  {
+                   "idCnt": 58946,
+                   "server": "DBASES03",
+                   "db_name": "co_vyksa",
+                   "idA": 10021624,
+                   "val": "492",
+                   "idType": "01",
+                   "date": "2025-12-17T06:57:25.000Z",
+                   "datB": "2025-11-30T21:00:00.000Z"
+                  }
+                 ],
+                 "notes": "Передано через сайт",
+                 "category": 0
+                }
+        )
+
+    @staticmethod
     def make_campaign_profile(
         _region_id: int,
         _region_name: str,
