@@ -269,13 +269,11 @@ class MeterReadingTransmitter(toga.App):
                     campaign,
                 )
                 return subscriber_data_model
-            except requests.exceptions.ReadTimeout as e:
-                return e
-            except requests.exceptions.Timeout as e:
-                return e
-            except requests.exceptions.ConnectionError as e:
-                return e
-            except requests.exceptions.HTTPError as e:
+            except (
+                    requests.exceptions.ReadTimeout,
+                    requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError) as e:
                 return e
 
         tasks = []
