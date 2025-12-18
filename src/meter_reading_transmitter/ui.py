@@ -327,7 +327,7 @@ class MeterReadingTransmitter(toga.App):
                        current_campaign.sending_data_counters(counter, sending_data_txtinp.value)
 
                     sending_counter_btn = Button(
-                        stile=Pack(
+                        style=Pack(
                             flex=0
                         ),
                         text='Отправить',
