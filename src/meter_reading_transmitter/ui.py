@@ -259,14 +259,15 @@ class MeterReadingTransmitter(toga.App):
         profile = next((p for p in profiles if p.profile_name == profile_name_for_sending), None)
         subscriber_campaigns = profile.subscriber_campaigns
 
-        async def fetch_subscriber_data(campaign, current_campaign):
+        async def fetch_subscriber_data(subscriber_campaign):
+            current_campaign = self.campaign_registry.get(subscriber_campaign.campaign.key)
             loop = asyncio.get_running_loop()
             try:
                 # если get_subscriber_data блокирующий, уводим в executor
                 subscriber_data_model = await loop.run_in_executor(
                     None,
                     current_campaign.get_subscriber_data,
-                    campaign,
+                    subscriber_campaign,
                 )
                 return subscriber_data_model
             except (
@@ -277,9 +278,8 @@ class MeterReadingTransmitter(toga.App):
                 return e
 
         tasks = []
-        for subscriber_campaigns in subscriber_campaigns:
-            current_campaign = self.campaign_registry.get(subscriber_campaigns.campaign.key)
-            tasks.append(fetch_subscriber_data(subscriber_campaigns, current_campaign))
+        for subscriber_campaign in subscriber_campaigns:
+            tasks.append(fetch_subscriber_data(subscriber_campaign))
 
         subscriber_campaigns = await asyncio.gather(*tasks, return_exceptions=False)
 

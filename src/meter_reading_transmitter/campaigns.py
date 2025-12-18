@@ -214,10 +214,8 @@ class KVCCampaign(CampaignInterface):
             counters.append(counter_model)
 
         return SubscriberKCVCampaignModelDataUpload(
-            campaign=_subscriber_campaign.campaign,
             id=subscriber_id,
             address=subscriber_address,
-            personal_account=personal_account,
             counters=counters,
             **_subscriber_campaign.model_dump()
         )
