@@ -321,11 +321,22 @@ class MeterReadingTransmitter(toga.App):
 
                     sending_data_lbl = Label(text='Показания:')
                     sending_data_txtinp = TextInput(style=Pack(flex=1), value=counter.value_last)
+                    
+                    def sending_counter_data(widget)
+                       current_campaign = self.campaign_registry.get(subscriber_campaign.campaign.key)
+                       current_campaign.sending_data_counters(counter, sending_data_txtinp.value)
+
+                    sending_counter_btn = Button(
+                        stile=Pack(
+                            flex=0
+                        )
+                        text='Отправить',
+                        on_press=sending_counter_data
+                    )
+                    sending_counter_data_box.add(sending_data_lbl, sending_data_txtinp, sending_counter_btn)
 
                     counter_number_lbl = Label(text=f'Номер счетчика: {counter.number}')
                     counter_checking_date_lbl = Label(text=f'Дата поверки: {counter.checking_data}')
-
-                    sending_counter_data_box.add(sending_data_lbl, sending_data_txtinp)
                     counter_data_box.add(
                         sending_counter_data_box,
                         counter_number_lbl,
@@ -357,7 +368,7 @@ class MeterReadingTransmitter(toga.App):
             on_press=self.show_profiles_view
         )
 
-        sending_btn = Button(
+        sending_all_btn = Button(
             style=Pack(
                 flex=1
             ),
@@ -365,7 +376,7 @@ class MeterReadingTransmitter(toga.App):
             on_press=...
         )
 
-        sending_btn_box.add(return_btn, sending_btn)
+        sending_btn_box.add(return_btn, sending_all_btn)
         self.footer_box.add(sending_btn_box)
             
     def show_create_profile_view(self, widget):
