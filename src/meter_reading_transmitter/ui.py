@@ -257,7 +257,7 @@ class MeterReadingTransmitter(toga.App):
         profile_name_for_sending = profile_btn_id[: profile_btn_id.rfind("_profile")]
         profiles = Settings.load_settings()
         profile = next((p for p in profiles if p.profile_name == profile_name_for_sending), None)
-        subscriber_campaigns = profile.subscriber_campaigns
+        subscriber_campaigns_from_settings = profile.subscriber_campaigns
 
         async def fetch_subscriber_data(subscriber_campaign):
             current_campaign = self.campaign_registry.get(subscriber_campaign.campaign.key)
@@ -278,15 +278,15 @@ class MeterReadingTransmitter(toga.App):
                 return e
 
         tasks = []
-        for subscriber_campaign in subscriber_campaigns:
+        for subscriber_campaign in subscriber_campaigns_from_settings:
             tasks.append(fetch_subscriber_data(subscriber_campaign))
 
-        subscriber_campaigns = await asyncio.gather(*tasks, return_exceptions=False)
+        subscriber_campaigns_uploaded = await asyncio.gather(*tasks, return_exceptions=False)
 
-        for subscriber_campaign in subscriber_campaigns:
+        for campaign_index, subscriber_campaign in enumerate(subscriber_campaigns_uploaded):
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
             campaign_lbl_box = Box(style=Pack(direction=ROW))
-            campaign_lbl = Label(text=subscriber_campaign.campaign.title)
+            campaign_lbl = Label(text=subscriber_campaigns_from_settings[campaign_index].campaign.title)
             campaign_lbl_box.add(campaign_lbl)
 
             subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
