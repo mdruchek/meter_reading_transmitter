@@ -20,10 +20,14 @@ class CampaignModel(BaseModel):
 
 class CounterDataModel(BaseModel):
     id: int
+    server: str
+    db_name: str
     id_type: str
+    date_b: str
     number: str
     value_last: str
     checking_data: str
+    server_data: dict
 
 
 class SubscriberKVCCampaignModelSettings(BaseModel):

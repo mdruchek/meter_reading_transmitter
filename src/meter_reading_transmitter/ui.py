@@ -306,17 +306,16 @@ class MeterReadingTransmitter(toga.App):
                 error_lbl = Label(text=msg)
                 subscriber_data_box.add(error_lbl)
             else:
-                subscriber_data_model = subscriber_campaign
                 subscriber_address = (
-                    f'Адрес: {subscriber_data_model.address} '
-                    f'Лицевой счёт: {subscriber_data_model.personal_account}'
+                    f'Адрес: {subscriber_campaign.address} '
+                    f'Лицевой счёт: {subscriber_campaign.personal_account}'
                 )
 
                 subscriber_data_lbl = Label(text=subscriber_address)
                 subscriber_data_box.add(subscriber_data_lbl)
 
                 counters_data_box = Box(style=Pack(direction=COLUMN, flex=1))
-                for counter in subscriber_data_model.counters:
+                for counter in subscriber_campaign.counters:
                     counter_data_box = Box(style=Pack(direction=ROW, flex=1))
                     sending_counter_data_box = Box(style=Pack(direction=ROW, flex=1))
 
@@ -362,7 +361,7 @@ class MeterReadingTransmitter(toga.App):
             style=Pack(
                 flex=1
             ),
-            text='Передать показания',
+            text='Передать всё',
             on_press=...
         )
 

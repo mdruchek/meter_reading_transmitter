@@ -198,17 +198,24 @@ class KVCCampaign(CampaignInterface):
 
         for counter in counters_list:
             counter_id = counter['id_cnt']
+            counter_server = counter['server']
+            counter_db_name = counter['db_name']
             counter_id_type = counter['id_type']
+            counter_date_b = counter['dat_b']
             counter_number: str = counter['number'].strip()
-            value_last = counter['c_val_lst']
-            checking_data = counter['dat_sn']
+            counter_value_last = counter['c_val_lst']
+            counter_checking_data = counter['dat_sn']
             
             counter_model = CounterDataModel(
                 id=counter_id,
+                server=counter_server,
+                db_name=counter_db_name,
                 id_type=counter_id_type,
+                date_b=counter_date_b,
                 number=counter_number,
-                value_last=value_last,
-                checking_data=checking_data,
+                value_last=counter_value_last,
+                checking_data=counter_checking_data,
+                server_data=location_for_region
             )
 
             counters.append(counter_model)
@@ -221,33 +228,31 @@ class KVCCampaign(CampaignInterface):
         )
 
     @staticmethod
-    def send_data_counters(subscriber_campaign: SubscriberKCVCampaignModelDataUpload):
-        response = KVCCampaign.api_request(
-            'POST',
-            'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
-            json={
-                "servDb": {
-                  "server": "DBASES03",
-                  "db_name": "co_vyksa",
-                  "login": null,
-                  "id_user": null
-                 },
-                 "ctrForInsert": [
-                  {
-                   "idCnt": 58946,
-                   "server": "DBASES03",
-                   "db_name": "co_vyksa",
-                   "idA": 10021624,
-                   "val": "492",
-                   "idType": "01",
-                   "date": "2025-12-17T06:57:25.000Z",
-                   "datB": "2025-11-30T21:00:00.000Z"
-                  }
-                 ],
-                 "notes": "Передано через сайт",
-                 "category": 0
+    def sending_data_counters(subscriber_campaign: SubscriberKCVCampaignModelDataUpload, value_sending: str):
+        counters = subscriber_campaign.counters
+
+        for counter in counters:
+            response = KVCCampaign.api_request(
+                'POST',
+                'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
+                json={
+                    "servDb": counter.server_data,
+                    "ctrForInsert": [
+                        {
+                            "idCnt": counter.id,
+                            "server": counter.server,
+                            "db_name": counter.db_name,
+                            "idA": subscriber_campaign.id,
+                            "val": counter.value_sending,
+                            "idType": counter.id_type,
+                            "date": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
+                            "datB": counter.dat_b
+                        }
+                    ],
+                    "notes": "Передано через сайт",
+                    "category": 0
                 }
-        )
+            )
 
     @staticmethod
     def make_subscriber_campaign_profile(
