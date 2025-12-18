@@ -1,11 +1,33 @@
+from typing import Any, Dict, TypeVar, Type
+
+from pydantic import BaseModel, Field
+
 from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS
 
 
-from pydantic import BaseModel, Field
+T = TypeVar('T', bound=BaseModel)
+
+def model_dump(self: T, **kwargs: Any) -> Dict[str, Any]:
+    return self.dict(**kwargs)
+
+BaseModel.model_dump = model_dump
+
 
 class CampaignModel(BaseModel):
     key: str
     title: str
+
+
+class CounterDataModel(BaseModel):
+    id: int
+    id_type: str
+    number: str
+    value_last: str
+    checking_data: str
+
+
+class SubscriberKVCCampaignModelSettings(BaseModel):
+    campaign: CampaignModel
     region_id: int | None = None
     region_name: str | None = None
     personal_account: str = Field(
@@ -16,20 +38,12 @@ class CampaignModel(BaseModel):
     )
 
 
-class CounterDataModel(BaseModel):
-    id: int
-    number: str
-    value_last: str
-    checking_data: str
-
-
-class SubscriberDataModel(BaseModel):
+class SubscriberKCVCampaignModelDataUpload(SubscriberKVCCampaignModelSettings):
     id: int
     address: str
-    personal_account: str
     counters: list[CounterDataModel]
 
 
 class ProfileModel(BaseModel):
     profile_name: str
-    campaigns: list[CampaignModel] = []
+    subscriber_campaigns: list[SubscriberKVCCampaignModelSettings] = []

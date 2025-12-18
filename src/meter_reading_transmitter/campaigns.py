@@ -5,7 +5,7 @@ from requests.sessions import should_bypass_proxies
 from pydantic import ValidationError
 import requests
 
-from .models import CampaignModel, SubscriberDataModel, CounterDataModel
+from .models import CampaignModel, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload, CounterDataModel
 
 
 class CampaignInterface(ABC):
@@ -120,9 +120,9 @@ class KVCCampaign(CampaignInterface):
 
 
     @staticmethod
-    def get_subscriber_data(_campaign_model: CampaignModel):
-        region_id = _campaign_model.region_id
-        personal_account = _campaign_model.personal_account
+    def get_subscriber_data(_subscriber_campaign: SubscriberKVCCampaignModelSettings):
+        region_id = _subscriber_campaign.region_id
+        personal_account = _subscriber_campaign.personal_account
 
         locations_for_region = KVCCampaign.api_request(
             'POST',
@@ -140,6 +140,8 @@ class KVCCampaign(CampaignInterface):
             }
         )
 
+        print(subscriber_info)
+
         subscriber_id = subscriber_info['id']
 
         location_for_region = next((loc for loc in locations_for_region if loc['db_name'] == 'co_vyksa'), None)
@@ -153,6 +155,8 @@ class KVCCampaign(CampaignInterface):
             }
         )
 
+        print(message_for_subscriber)
+
         counters_list = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetCntList',
@@ -161,6 +165,8 @@ class KVCCampaign(CampaignInterface):
                 "lc": personal_account
             }
         )
+
+        print(counters_list)
 
         tranzit_days = KVCCampaign.api_request(
             'POST',
@@ -192,12 +198,14 @@ class KVCCampaign(CampaignInterface):
 
         for counter in counters_list:
             counter_id = counter['id_cnt']
+            counter_id_type = counter['id_type']
             counter_number: str = counter['number'].strip()
             value_last = counter['c_val_lst']
             checking_data = counter['dat_sn']
             
             counter_model = CounterDataModel(
                 id=counter_id,
+                id_type=counter_id_type,
                 number=counter_number,
                 value_last=value_last,
                 checking_data=checking_data,
@@ -205,16 +213,17 @@ class KVCCampaign(CampaignInterface):
 
             counters.append(counter_model)
 
-
-        return SubscriberDataModel(
+        return SubscriberKCVCampaignModelDataUpload(
+            campaign=_subscriber_campaign.campaign,
             id=subscriber_id,
             address=subscriber_address,
             personal_account=personal_account,
-            counters=counters
+            counters=counters,
+            **_subscriber_campaign.model_dump()
         )
 
     @staticmethod
-    def send_data_counters(counters: list[CounterDataModel]):
+    def send_data_counters(subscriber_campaign: SubscriberKCVCampaignModelDataUpload):
         response = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
@@ -243,7 +252,7 @@ class KVCCampaign(CampaignInterface):
         )
 
     @staticmethod
-    def make_campaign_profile(
+    def make_subscriber_campaign_profile(
         _region_id: int,
         _region_name: str,
         _personal_account: str,
@@ -252,15 +261,17 @@ class KVCCampaign(CampaignInterface):
         personal_account = (_personal_account or "").strip()
 
         try:
-            campaign_profile = CampaignModel(
-                key=KVCCampaign.key,
-                title=KVCCampaign.title,
+            subscriber_campaign = SubscriberKVCCampaignModelSettings(
+                campaign=CampaignModel(
+                    title=KVCCampaign.title,
+                    key=KVCCampaign.key
+                ),
                 region_id=_region_id,
                 region_name=_region_name,
                 personal_account=personal_account,
             )
 
-            return campaign_profile
+            return subscriber_campaign
 
         except ValidationError as e:
             message_error = 'лицевой счет жолжен содержать 10 цифр'

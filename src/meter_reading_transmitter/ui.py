@@ -40,7 +40,7 @@ from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
 from toga.validators import ContainsDigit, NotContains
 
-from .models import ProfileModel, CampaignModel, SubscriberDataModel
+from .models import ProfileModel, CampaignModel, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface, KVCCampaign
 from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
 from .settings_storage import Settings
@@ -51,7 +51,6 @@ class MeterReadingTransmitter(toga.App):
         super().__init__(formal_name="Передача показаний счетчиков", **kwargs)
 
         self.campaign_registry = CAMPAIGN_REGISTRY
-        self.current_campaign = None
         self.settings_campaigns_for_add: list[CampaignModel] = []
 
 
@@ -258,7 +257,7 @@ class MeterReadingTransmitter(toga.App):
         profile_name_for_sending = profile_btn_id[: profile_btn_id.rfind("_profile")]
         profiles = Settings.load_settings()
         profile = next((p for p in profiles if p.profile_name == profile_name_for_sending), None)
-        campaigns = profile.campaigns
+        subscriber_campaigns = profile.subscriber_campaigns
 
         async def fetch_subscriber_data(campaign, current_campaign):
             loop = asyncio.get_running_loop()
@@ -278,34 +277,34 @@ class MeterReadingTransmitter(toga.App):
                 return e
 
         tasks = []
-        for campaign in campaigns:
-            current_campaign = self.campaign_registry.get(campaign.key)
-            tasks.append(fetch_subscriber_data(campaign, current_campaign))
+        for subscriber_campaigns in subscriber_campaigns:
+            current_campaign = self.campaign_registry.get(subscriber_campaigns.campaign.key)
+            tasks.append(fetch_subscriber_data(subscriber_campaigns, current_campaign))
 
-        results = await asyncio.gather(*tasks, return_exceptions=False)
+        subscriber_campaigns = await asyncio.gather(*tasks, return_exceptions=False)
 
-        for campaign, result in zip(campaigns, results):
+        for subscriber_campaign in subscriber_campaigns:
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
             campaign_lbl_box = Box(style=Pack(direction=ROW))
-            campaign_lbl = Label(text=campaign.title)
+            campaign_lbl = Label(text=subscriber_campaign.campaign.title)
             campaign_lbl_box.add(campaign_lbl)
 
             subscriber_data_box = Box(style=Pack(flex=0, direction=ROW))
 
-            if isinstance(result, Exception):
+            if isinstance(subscriber_campaign, Exception):
                 # показываем причину ошибки для конкретной кампании
-                if isinstance(result, requests.exceptions.Timeout):
+                if isinstance(subscriber_campaign, requests.exceptions.Timeout):
                     msg = 'Сервер не отвечает. Попробуйте позже.'
-                elif isinstance(result, requests.exceptions.ConnectionError):
+                elif isinstance(subscriber_campaign, requests.exceptions.ConnectionError):
                     msg = 'Ошибка сети. Проверьте подключение.'
-                elif isinstance(result, requests.exceptions.HTTPError):
+                elif isinstance(subscriber_campaign, requests.exceptions.HTTPError):
                     msg = 'Ошибка на стороне сервера.'
                 else:
-                    msg = f'Неизвестная ошибка: {type(result).__name__}'
+                    msg = f'Неизвестная ошибка: {type(subscriber_campaign).__name__}'
                 error_lbl = Label(text=msg)
                 subscriber_data_box.add(error_lbl)
             else:
-                subscriber_data_model = result
+                subscriber_data_model = subscriber_campaign
                 subscriber_address = (
                     f'Адрес: {subscriber_data_model.address} '
                     f'Лицевой счёт: {subscriber_data_model.personal_account}'
@@ -412,7 +411,7 @@ class MeterReadingTransmitter(toga.App):
 
                 profile_for_add_raw: dict[str, str | list[object]] = {
                     "profile_name": profile_name,
-                    "campaigns": campaigns,
+                    "subscriber_campaigns": campaigns,
                 }
                 try:
                     profile = ProfileModel(**profile_for_add_raw)
@@ -444,8 +443,8 @@ class MeterReadingTransmitter(toga.App):
         campaigns_box = Box(style=Pack(direction=ROW, flex=1))
 
         def select_campaign(widget, key):
-            self.current_campaign = self.campaign_registry.get(key)
-            self.show_campaigns_settings_view(widget=widget)
+            selected_campaign = self.campaign_registry.get(key)
+            self.show_campaigns_settings_view(widget, selected_campaign)
 
         for campaign_key, campaign_obj in self.campaign_registry.items():
             campaign_btn = Button(
@@ -467,16 +466,16 @@ class MeterReadingTransmitter(toga.App):
         return_btn_box.add(return_btn)
         self.footer_box.add(return_btn_box)
 
-    def show_campaigns_settings_view(self, widget):
+    def show_campaigns_settings_view(self, widget, selected_campaign):
         self.header_box.clear()
         head_label = Label(text="Данные кампании")
         self.header_box.add(head_label)
 
         self.body_box.clear()
 
-        if self.current_campaign.region_required:
+        if selected_campaign.region_required:
             region_box = Box(style=Pack(direction=COLUMN, flex=0))
-            regions = self.current_campaign.get_active_regions()
+            regions = selected_campaign.get_active_regions()
             region_selection = Selection(items=regions, accessor="name")
             region_box.add(region_selection)
             self.body_box.add(region_box)
@@ -515,14 +514,14 @@ class MeterReadingTransmitter(toga.App):
             region_name = None
             region_id = None
 
-            if self.current_campaign.region_required:
+            if selected_campaign.region_required:
                 region_row = region_selection.value
                 region_name = region_row.name
                 region_id = region_row.id
 
             personal_account = personal_account_txt_input.value.strip()
 
-            campaign_obj_or_err = self.current_campaign.make_campaign_profile(
+            campaign_obj_or_err = selected_campaign.make_subscriber_campaign_profile(
                 _region_id=region_id,
                 _region_name=region_name,
                 _personal_account=personal_account,
@@ -540,7 +539,7 @@ class MeterReadingTransmitter(toga.App):
             campaign_box = Box(style=Pack(flex=0, direction=COLUMN))
 
             campaign_label = Label(
-                text=f'Добавлена кампания "{campaign_obj_or_err.title}"'
+                text=f'Добавлена кампания "{campaign_obj_or_err.campaign.title}"'
             )
 
             campaign_box.add(campaign_label)
