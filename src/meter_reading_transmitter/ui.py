@@ -322,14 +322,14 @@ class MeterReadingTransmitter(toga.App):
                     sending_data_lbl = Label(text='Показания:')
                     sending_data_txtinp = TextInput(style=Pack(flex=1), value=counter.value_last)
                     
-                    def sending_counter_data(widget)
+                    def sending_counter_data(widget):
                        current_campaign = self.campaign_registry.get(subscriber_campaign.campaign.key)
                        current_campaign.sending_data_counters(counter, sending_data_txtinp.value)
 
                     sending_counter_btn = Button(
                         stile=Pack(
                             flex=0
-                        )
+                        ),
                         text='Отправить',
                         on_press=sending_counter_data
                     )
