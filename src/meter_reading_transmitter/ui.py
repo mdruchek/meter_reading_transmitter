@@ -269,6 +269,8 @@ class MeterReadingTransmitter(toga.App):
                     campaign,
                 )
                 return subscriber_data_model
+            except requests.exceptions.ReadTimeout as e:
+                return e
             except requests.exceptions.Timeout as e:
                 return e
             except requests.exceptions.ConnectionError as e:
@@ -295,6 +297,8 @@ class MeterReadingTransmitter(toga.App):
                 # показываем причину ошибки для конкретной кампании
                 if isinstance(subscriber_campaign, requests.exceptions.Timeout):
                     msg = 'Сервер не отвечает. Попробуйте позже.'
+                elif isinstance(subscriber_campaign, requests.exceptions.ReadTimeout):
+                    msg = 'Превышено время ожидания ответа сервера.'
                 elif isinstance(subscriber_campaign, requests.exceptions.ConnectionError):
                     msg = 'Ошибка сети. Проверьте подключение.'
                 elif isinstance(subscriber_campaign, requests.exceptions.HTTPError):
