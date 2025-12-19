@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 import json
 
 from requests.sessions import should_bypass_proxies
@@ -200,6 +201,7 @@ class KVCCampaign(CampaignInterface):
             counter_id = counter['id_cnt']
             counter_server = counter['server']
             counter_db_name = counter['db_name']
+            counter_id_a = counter['id_a']
             counter_id_type = counter['id_type']
             counter_date_b = counter['dat_b']
             counter_number: str = counter['number'].strip()
@@ -210,6 +212,7 @@ class KVCCampaign(CampaignInterface):
                 id=counter_id,
                 server=counter_server,
                 db_name=counter_db_name,
+                id_a=counter_id_a
                 id_type=counter_id_type,
                 date_b=counter_date_b,
                 number=counter_number,
@@ -239,8 +242,8 @@ class KVCCampaign(CampaignInterface):
                         "idCnt": counter.id,
                         "server": counter.server,
                         "db_name": counter.db_name,
-                        "idA": subscriber_campaign.id,
-                        "val": counter.value_sending,
+                        "idA": counter.id_a,
+                        "val": value_sending,
                         "idType": counter.id_type,
                         "date": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
                         "datB": counter.dat_b

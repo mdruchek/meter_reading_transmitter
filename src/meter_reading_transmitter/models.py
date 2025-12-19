@@ -22,6 +22,7 @@ class CounterDataModel(BaseModel):
     id: int
     server: str
     db_name: str
+    id_a: int
     id_type: str
     date_b: str
     number: str
