@@ -29,12 +29,14 @@ except Exception as e:
     print(f"CSS fix skipped: {e}")
 
 
+
 import asyncio
+from datetime import datetime
 
 from pydantic import ValidationError
-
 import requests
 import toga
+from toga.colors import rgb
 from toga import Box, Button, Label, TextInput, Selection, ErrorDialog
 from toga.style import Pack
 from toga.style.pack import COLUMN, ROW
@@ -108,7 +110,7 @@ class MeterReadingTransmitter(toga.App):
 
         profile_name_box.add(profile_name_lbl, profile_name_txtinp)
 
-        profile_campaigns = profile.campaigns
+        subscriber_campaigns = profile.subscriber_campaigns
         campaigns_box = Box(
             style=Pack(
                 direction=COLUMN,
@@ -116,7 +118,7 @@ class MeterReadingTransmitter(toga.App):
             )
         )
 
-        for campaign_index, campaign in enumerate(profile_campaigns):
+        for campaign_index, subscriber_campaign in enumerate(subscriber_campaigns):
             campaign_box = Box(
                 style=Pack(
                     direction=ROW,
@@ -125,11 +127,11 @@ class MeterReadingTransmitter(toga.App):
             )
 
             def remove_campaign_from_profile(wigget, _campaign_index):
-                profile_campaigns.pop(_campaign_index)
+                subscriber_campaigns.pop(_campaign_index)
                 campaign_box.insert(0, Label(style=Pack(color='#8B0000'), text='Удалён'))
 
-            campaign_name = campaign.title
-            personal_account = campaign.personal_account
+            campaign_name = subscriber_campaign.campaign.title
+            personal_account = subscriber_campaign.personal_account
             campaign_lbl = Label(text=f'Кампания {campaign_name}. Лицевой счет {personal_account}')
 
             campaign_delete_btn = Button(
@@ -166,7 +168,7 @@ class MeterReadingTransmitter(toga.App):
 
             profile_edited = ProfileModel(
                 profile_name=profile_name_txtinp.value,
-                campaigns=profile_campaigns
+                campaigns=subscriber_campaigns
             )
 
             profiles.insert(profile_index, profile_edited)
@@ -320,7 +322,19 @@ class MeterReadingTransmitter(toga.App):
                     sending_counter_data_box = Box(style=Pack(direction=ROW, flex=1))
 
                     sending_data_lbl = Label(text='Показания:')
-                    sending_data_txtinp = TextInput(style=Pack(flex=1), value=counter.value_last)
+
+                    month_from_counter = datetime.fromisoformat(counter.date_b).month
+                    current_month = datetime.now().month
+
+                    if month_from_counter == current_month:
+                        bg_color = rgb(0, 80, 0)  # тёмно‑зелёный
+                    else:
+                        bg_color = rgb(120, 0, 0)  # тёмно‑красный
+
+                    sending_data_txtinp = TextInput(
+                        style=Pack(flex=1, background_color=bg_color),
+                        value=counter.value_last,
+                    )
                     
                     def sending_counter_data(
                             widget,

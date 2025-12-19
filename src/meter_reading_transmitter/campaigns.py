@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 from requests.sessions import should_bypass_proxies
@@ -117,7 +117,7 @@ class KVCCampaign(CampaignInterface):
     def  api_request(method: str, url: str, *, timeout: float = 3, **kwargs):
         response = requests.request(method, url, timeout=timeout, **kwargs)
         response.raise_for_status()
-        return response.json()
+        return response.ok, response.json()
 
 
     @staticmethod
@@ -125,13 +125,13 @@ class KVCCampaign(CampaignInterface):
         region_id = _subscriber_campaign.region_id
         personal_account = _subscriber_campaign.personal_account
 
-        locations_for_region = KVCCampaign.api_request(
+        response_ok, locations_for_region = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetLocationsForRegion',
             params={"idRegion": region_id}
         )
 
-        subscriber_info = KVCCampaign.api_request(
+        response_ok, subscriber_info = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetAbonentInfo',
             json={
@@ -147,7 +147,7 @@ class KVCCampaign(CampaignInterface):
 
         location_for_region = next((loc for loc in locations_for_region if loc['db_name'] == 'co_vyksa'), None)
 
-        message_for_subscriber = KVCCampaign.api_request(
+        response_ok, message_for_subscriber = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetMessageForAbonent',
             json = {
@@ -158,7 +158,7 @@ class KVCCampaign(CampaignInterface):
 
         print(message_for_subscriber)
 
-        counters_list = KVCCampaign.api_request(
+        response_ok, counters_list = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetCntList',
             json = {
@@ -169,7 +169,7 @@ class KVCCampaign(CampaignInterface):
 
         print(counters_list)
 
-        tranzit_days = KVCCampaign.api_request(
+        response_ok, tranzit_days = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetCtrDays',
             json = {
@@ -178,7 +178,7 @@ class KVCCampaign(CampaignInterface):
             }
         )
 
-        counter_list = KVCCampaign.api_request(
+        response_ok, counter_list = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/GetCtrList',
             json = {
@@ -212,7 +212,7 @@ class KVCCampaign(CampaignInterface):
                 id=counter_id,
                 server=counter_server,
                 db_name=counter_db_name,
-                id_a=counter_id_a
+                id_a=counter_id_a,
                 id_type=counter_id_type,
                 date_b=counter_date_b,
                 number=counter_number,
@@ -232,7 +232,7 @@ class KVCCampaign(CampaignInterface):
 
     @staticmethod
     def sending_data_counter(counter: CounterDataModel, value_sending: str):
-        response = KVCCampaign.api_request(
+        response_ok, response_json = KVCCampaign.api_request(
             'POST',
             'https://send.kvc-nn.ru/api/ControlIndications/InsertCtr',
             json={
@@ -246,13 +246,15 @@ class KVCCampaign(CampaignInterface):
                         "val": value_sending,
                         "idType": counter.id_type,
                         "date": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
-                        "datB": counter.dat_b
+                        "datB": counter.date_b
                     }
                 ],
                 "notes": "Передано через сайт",
                 "category": 0
             }
         )
+
+        return response_ok
 
     @staticmethod
     def make_subscriber_campaign_profile(
