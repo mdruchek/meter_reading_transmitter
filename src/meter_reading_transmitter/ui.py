@@ -336,14 +336,31 @@ class MeterReadingTransmitter(toga.App):
                         value=counter.value_last,
                     )
                     
-                    def sending_counter_data(
+                    async def sending_counter_data(
                             widget,
                             _campaign=subscriber_campaign.campaign,
                             _counter=counter,
                             _input=sending_data_txtinp,
                     ):
-                       current_campaign = self.campaign_registry.get(_campaign.key)
-                       current_campaign.sending_data_counter(_counter, _input.value)
+
+                        current_campaign = self.campaign_registry.get(_campaign.key)
+                        status_code_ok = current_campaign.sending_data_counter(_counter, _input.value)
+
+                        if status_code_ok:
+                            await self.main_window.dialog(
+                                toga.InfoDialog(
+                                    "Информация",
+                                    "Показания переданы успешно",
+                                )
+                            )
+
+                        else:
+                            await self.main_window.dialog(
+                                toga.InfoDialog(
+                                    "Ошибка",
+                                    f"Не удалось передать показания",
+                                )
+                            )
 
                     sending_counter_btn = Button(
                         style=Pack(
