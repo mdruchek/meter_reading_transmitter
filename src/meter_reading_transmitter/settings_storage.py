@@ -1,18 +1,25 @@
+import sys
 import json
+
 from pydantic import ValidationError
 
 from .models import ProfileModel
 
-from .config import SETTINGS_FILE
+from .config import SETTINGS_FILE_DESKTOP, SETTINGS_FILE_ANDROID
 
 
 class Settings:
-    settings_file = SETTINGS_FILE
+    @classmethod
+    def get_settings_path(cls):
+        if sys.platform == "android":
+            return SETTINGS_FILE_ANDROID
+        return SETTINGS_FILE_DESKTOP
 
     @classmethod
     def load_settings(cls):
+
         try:
-            with open(cls.settings_file, "r", encoding="utf-8") as file:
+            with open(cls.get_settings_path(), "r", encoding="utf-8") as file:
                 settings_raw = json.load(file)
                 profiles: list[ProfileModel] = []
 
@@ -25,14 +32,14 @@ class Settings:
                 return profiles
         
         except FileNotFoundError:
-            with open(cls.settings_file, "w", encoding="utf-8") as file:
+            with open(cls.get_settings_path(), "w", encoding="utf-8") as file:
                 json.dump([], file, indent=4, ensure_ascii=False)
             return []
 
     @classmethod
     def save_settings(cls, profiles: list[ProfileModel]):
         profile_raw = [profile.model_dump() for profile in profiles]
-        with open(SETTINGS_FILE, "w", encoding="utf-8") as file:
+        with open(cls.get_settings_path(), "w", encoding="utf-8") as file:
             json.dump(profile_raw, file, indent=4, ensure_ascii=False)
 
     @classmethod
