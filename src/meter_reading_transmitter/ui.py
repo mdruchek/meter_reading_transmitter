@@ -32,6 +32,8 @@ except Exception as e:
 
 import asyncio
 from datetime import datetime
+from pathlib import Path
+import sys
 
 from pydantic import ValidationError
 import requests
@@ -45,6 +47,7 @@ from toga.validators import ContainsDigit, NotContains
 from .models import ProfileModel, CampaignModel, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload
 from .campaigns import CAMPAIGN_REGISTRY, CampaignInterface, KVCCampaign
 from .config import PERSONAL_ACCOUNT_TXT_INPUT_NUMBER_DIGITS, PERSONAL_ACCOUNT_TXT_INPUT_BACKGROUND_COLOR
+from .config import SETTINGS_FILE_DESKTOP, SETTINGS_FILE_ANDROID
 from .settings_storage import Settings
 
 
@@ -66,6 +69,17 @@ class MeterReadingTransmitter(toga.App):
         self.campaigns_box = Box(style=Pack(flex=1, direction=COLUMN))
 
     def startup(self):
+        # 1) вычисляем путь к settings.json для текущей платформы
+        if sys.platform == "android":
+            # каталог данных приложения внутри sandbox [web:630]
+            settings_path = self.paths.data / SETTINGS_FILE_ANDROID
+        else:
+            # старый путь на десктопе [web:633]
+            settings_path = Path(SETTINGS_FILE_DESKTOP)
+
+        # 2) передаём путь в Settings
+        Settings.init(settings_path)
+
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = self.view_box
         self.show_profiles_view(widget=None)
