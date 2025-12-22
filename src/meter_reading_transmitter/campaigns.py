@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 import json
@@ -5,6 +6,7 @@ import json
 from requests.sessions import should_bypass_proxies
 from pydantic import ValidationError
 import requests
+from bs4 import BeautifulSoup 
 
 from .models import CampaignModel, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload, CounterDataModel
 
@@ -281,22 +283,138 @@ class KVCCampaign(CampaignInterface):
         except ValidationError as e:
             message_error = 'лицевой счет жолжен содержать 10 цифр'
             return message_error
-        
-        
-class TNScompaign(CampaignInterface):
+
+
+
+class TNSCampaign(CampaignInterface):
     key = "tns"
     title = "ТНС"
-    region_required = False
-    
+    region_required = False   # регион не вводится, только ЛС
+
     @staticmethod
-    def make_campaign_profile(
-        personal_account: str,
-    ) -> CampaignModel:
-        return CampaignModel(
-            key=KVCCampaign.key,
-            title=KVCCampaign.title,
-            personal_account=personal_account,
+    def api_request(method: str, url: str, *, timeout: float = 5, **kwargs) -> requests.Response:
+        resp = requests.request(method, url, timeout=timeout, **kwargs)
+        resp.raise_for_status()
+        return resp
+
+    @staticmethod
+    def _get_csrf_and_first_html(session: requests.Session) -> tuple[str, str]:
+        """Загрузка /populationsend-and-pay → csrf + полный HTML."""
+        resp = session.get("https://nn.tns-e.ru/populationsend-and-pay")
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        csrf_input = soup.find("input", {"name": "delementcsrf"})
+        csrf = csrf_input["value"] if csrf_input else ""
+        return csrf, resp.text
+
+    @staticmethod
+    def _step_ls(session: requests.Session, csrf: str, personal_account: str) -> str:
+        """Шаг ввода ЛС: POST на handleAjax, получаем HTML с адресом, lshash и счётчиками."""
+        url = (
+            "https://nn.tns-e.ru/"
+            "bitrix/services/main/ajax.php?mode=class&c=delementform.submittingmeterreadings&action=handleAjax"
         )
+        data = {
+            "delementcsrf": csrf,
+            "delementformid": "delementform.submittingmeterreadings",
+            "ls": personal_account,
+            "currentstep": "0",
+            "nextstep": "1",
+        }
+        resp = session.post(url, data=data)
+        resp.raise_for_status()
+        return resp.text
+
+    @staticmethod
+    def _parse_subscriber_html(html: str, personal_account: str) -> tuple[str, list[CounterTNSDataModel]]:
+        """Парсинг HTML из шага 1: адрес + список счётчиков и их последние показания."""
+        soup = BeautifulSoup(html, "html.parser")
+
+        # адрес абонента — в теге <address> или похожем фрагменте
+        address_tag = soup.find("address")
+        if address_tag:
+            address = " ".join(address_tag.get_text(strip=True).split())
+        else:
+            # запасной вариант: ищем по тексту лицевого счёта рядом
+            address = ""
+
+        counters: list[CounterTNSDataModel] = []
+
+        # поля вида <input name="reading38315760" value="5809">
+        for inp in soup.find_all("input", {"name": re.compile(r"^readingd+$")}):
+            name = inp.get("name")
+            value = inp.get("value") or ""
+            try:
+                value_last = float(value.replace(",", "."))
+            except ValueError:
+                value_last = 0
+
+            # номер счётчика обычно рядом в разметке, поищем в соседях
+            number = ""
+            label = inp.find_parent().find_previous(string=re.compile(r"d"))
+            if label:
+                number = label.strip()
+
+            counter = CounterTNSDataModel(
+                id=name,               # пока используем имя поля как id
+                number=number,
+                value_last=value_last,
+                checking_date=None,    # дату поверки можно будет добрать, когда найдём в HTML
+                raw_html=str(inp),
+            )
+            counters.append(counter)
+
+        return address, counters
+
+    @staticmethod
+    def get_subscriber_data(_subscriber_campaign: SubscriberTNSCampaignModelSettings):
+        personal_account = _subscriber_campaign.personal_account.strip()
+
+        session = requests.Session()
+
+        csrf, _ = TNSCampaign._get_csrf_and_first_html(session)
+
+        html_step1 = TNSCampaign._step_ls(session, csrf, personal_account)
+
+        address, counters = TNSCampaign._parse_subscriber_html(html_step1, personal_account)
+
+        # id абонента TNS явно не отдаёт в API‑виде, оставляем None
+        return SubscriberTNSCampaignModelDataUpload(
+            id=None,
+            address=address,
+            personal_account=personal_account,
+            counters=counters,
+            campaign=_subscriber_campaign.campaign,
+        )
+
+    @staticmethod
+    def sending_data_counter(counter: CounterTNSDataModel, value_sending: str, personal_account: str):
+        """Отправка показаний по одному счётчику."""
+        session = requests.Session()
+        csrf, _ = TNSCampaign._get_csrf_and_first_html(session)
+
+        url = (
+            "https://nn.tns-e.ru/"
+            "bitrix/services/main/ajax.php?mode=class&c=delementform.submittingmeterreadings&action=handleAjax"
+        )
+
+        data = {
+            "delementcsrf": csrf,
+            "delementformid": "delementform.submittingmeterreadings",
+            "ls": personal_account,
+            # lshash можно дополнительно распарсить из html шага 1, когда потребуется
+            "policy": "Y",
+            "policy2": "Y",
+            "requestType": "sendReadings",
+            "currentstep": "1",
+            "nextstep": "2",
+            counter.id: value_sending,
+        }
+
+        resp = session.post(url, data=data)
+        resp.raise_for_status()
+        return resp.text
+
 
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {

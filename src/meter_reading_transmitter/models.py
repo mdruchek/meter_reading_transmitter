@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, TypeVar, Type
 
 from pydantic import BaseModel, Field
@@ -47,6 +48,27 @@ class SubscriberKCVCampaignModelDataUpload(SubscriberKVCCampaignModelSettings):
     id: int
     address: str
     counters: list[CounterDataModel]
+
+
+class SubscriberTNSCampaignModelSettings(BaseModel):
+    campaign: "CampaignModel"
+    personal_account: str
+
+
+class CounterTNSDataModel(BaseModel):
+    id: str | int            # внутрений id счётчика (если удастся вытащить)
+    number: str              # номер счётчика
+    value_last: float | int  # последние показания
+    checking_date: datetime | None  # дата поверки, если найдём
+    raw_html: str | None = None     # на всякий случай, оригинальный фрагмент
+
+
+class SubscriberTNSCampaignModelDataUpload(BaseModel):
+    id: str | int | None
+    address: str
+    personal_account: str
+    counters: list[CounterTNSDataModel]
+    campaign: "CampaignModel"
 
 
 class ProfileModel(BaseModel):
