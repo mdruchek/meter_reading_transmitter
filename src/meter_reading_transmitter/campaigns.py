@@ -8,7 +8,7 @@ from pydantic import ValidationError
 import requests
 from bs4 import BeautifulSoup 
 
-from .models import CampaignModel, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload, CounterDataModel
+from .models import CampaignModel, CounterTNSDataModel, SubscriberTNSCampaignModelSettings, SubscriberTNSCampaignModelDataUpload, SubscriberKVCCampaignModelSettings, SubscriberKCVCampaignModelDataUpload, CounterDataModel
 
 
 class CampaignInterface(ABC):
@@ -39,7 +39,7 @@ class CampaignInterface(ABC):
     def make_campaign_profile(
         _key: str,
         _title: str,
-        _region_required: bool
+        _region_required: bool,
     ) -> CampaignModel:
         ...
 
@@ -300,19 +300,20 @@ class TNSCampaign(CampaignInterface):
     @staticmethod
     def _get_csrf_and_first_html(session: requests.Session) -> tuple[str, str]:
         """Загрузка /populationsend-and-pay → csrf + полный HTML."""
-        resp = session.get("https://nn.tns-e.ru/populationsend-and-pay")
+        resp = session.get("https://nn.tns-e.ru/population/send-and-pay/")
         resp.raise_for_status()
+        print(resp.text)
         soup = BeautifulSoup(resp.text, "html.parser")
         csrf_input = soup.find("input", {"name": "delementcsrf"})
         csrf = csrf_input["value"] if csrf_input else ""
+        print(csrf)
         return csrf, resp.text
 
     @staticmethod
     def _step_ls(session: requests.Session, csrf: str, personal_account: str) -> str:
         """Шаг ввода ЛС: POST на handleAjax, получаем HTML с адресом, lshash и счётчиками."""
         url = (
-            "https://nn.tns-e.ru/"
-            "bitrix/services/main/ajax.php?mode=class&c=delementform.submittingmeterreadings&action=handleAjax"
+            "https://nn.tns-e.ru/bitrix/services/main/ajax.php?mode=class&c=delementform.submittingmeterreadings&action=handleAjax"
         )
         data = {
             "delementcsrf": csrf,
@@ -322,6 +323,7 @@ class TNSCampaign(CampaignInterface):
             "nextstep": "1",
         }
         resp = session.post(url, data=data)
+        print(resp)
         resp.raise_for_status()
         return resp.text
 
@@ -415,9 +417,33 @@ class TNSCampaign(CampaignInterface):
         resp.raise_for_status()
         return resp.text
 
+    @staticmethod
+    def make_subscriber_campaign_profile(
+        _personal_account: str,
+        _region_id=None,
+        _region_name=None,
+    ) -> CampaignModel | str:
+
+        personal_account = (_personal_account or "").strip()
+
+        try:
+            subscriber_campaign = SubscriberTNSCampaignModelSettings(
+                campaign=CampaignModel(
+                    title=TNSCampaign.title,
+                    key=TNSCampaign.key
+                ),
+                personal_account=personal_account,
+            )
+
+            return subscriber_campaign
+
+        except ValidationError as e:
+            message_error = 'лицевой счет жолжен содержать 10 цифр'
+            return message_error
+
 
 
 CAMPAIGN_REGISTRY: dict[str, type[CampaignInterface]] = {
     KVCCampaign.key: KVCCampaign,
-    TNScompaign.key: TNScompaign
+    TNSCampaign.key: TNSCampaign
 }

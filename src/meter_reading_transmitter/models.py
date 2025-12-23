@@ -73,4 +73,4 @@ class SubscriberTNSCampaignModelDataUpload(BaseModel):
 
 class ProfileModel(BaseModel):
     profile_name: str
-    subscriber_campaigns: list[SubscriberKVCCampaignModelSettings] = []
+    subscriber_campaigns: list[SubscriberKVCCampaignModelSettings | SubscriberTNSCampaignModelSettings] = []
